@@ -6,36 +6,17 @@
 
 ## 프로젝트 디렉토리 구조
 .
-├── docker/                          # Docker 컨테이너 기술 학습 및 실습
-│   ├── docker-vol/                  # Docker 볼륨(Volume) 관리 학습
-│   │                                # - 컨테이너와 호스트 간 데이터 공유
-│   │                                # - 데이터 영속성 관리
-│   │
-│   ├── hello/                       # Docker 기본 예제 및 입문
-│   │                                # - 간단한 이미지 빌드/실행 연습
-│   │                                # - Dockerfile 작성 기초
-│   │
-│   ├── nginx/                       # Nginx 웹서버 설정 및 구성
-│   │   └── app/                     # Nginx와 연동되는 애플리케이션
-│   │                                # - 웹서버와 앱 연결 구조 학습
-│   │                                # - 리버스 프록시 설정 등
-│   │
-│   └── ubuntu/                      # Ubuntu 기반 컨테이너 실습
-│                                    # - Linux 환경에서의 Docker 사용
-│
-├── git/                             # Git 버전 관리 학습
-│                                    # - 커밋, 브랜치, 병합 등 실습
-│                                    # - GitHub/GitLab 연동 학습
-│
-├── python/                          # Python 프로그래밍 학습
-│   └── data/                        # 데이터 처리 및 분석 코드
-│                                    # - 파일 입출력, 데이터 조작
-│                                    # - 데이터셋 관리
-│
-└── static/                          # 정적 웹 리소스
-                                     # - HTML, CSS, JavaScript 파일
-                                     # - 이미지, 폰트 등 미디어 자산
-                                     # - 웹 프론트엔드 관련 파일
+├── docker
+│   ├── docker-vol
+│   ├── hello
+│   ├── nginx
+│   │   └── app
+│   └── ubuntu
+├── git
+├── python
+│   └── data
+└── static
+
 
 ## Command Line Interface
 
@@ -301,6 +282,18 @@ $ curl http://localhost:8080
 ### 결과
 <img src="./static/3.png" width="100%">>
 
+
+## 호스트 포트가 이미 사용 중'이라 포트 매핑 실패 해결 방법
+
+### 포트 8080 확인
+```zsh
+$ lsof -i :8080
+```
+
+### 종료
+```zsh
+$ pkill -9 [PID]
+```
 
 
 ### Nginx 로그 확인
