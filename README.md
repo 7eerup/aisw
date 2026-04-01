@@ -4,19 +4,6 @@
 - Docker version 28.2.2, build 28.2.2-0ubuntu1
 - git version 2.51.0
 
-## 프로젝트 디렉토리 구조
-.
-├── docker
-│   ├── docker-vol
-│   ├── hello
-│   ├── nginx
-│   │   └── app
-│   └── ubuntu
-├── git
-├── python
-│   └── data
-└── static
-
 
 ## Command Line Interface
 
