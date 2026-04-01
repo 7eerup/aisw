@@ -266,6 +266,11 @@ $ docker ps
 $ curl http://localhost:8080
 ```
 
+### 결과
+<img src="./static/docker.png" width="100%">>
+
+
+
 ### Nginx 로그 확인
 ```zsh
 $ docker logs my-nginx-server
@@ -443,3 +448,8 @@ PB (페타바이트)	1,024 TB	데이터센터
 EB (엑사바이트)	1,024 PB	인터넷 전체 트래픽
 ```
 
+
+## Git GitHub
+| Image 1 | Image 2 |
+|---------|---------|
+| <img src="./static/1.png" width="100%"> | <img src="./static/2.png" width="100%"> |
