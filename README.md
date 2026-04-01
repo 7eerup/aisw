@@ -267,7 +267,7 @@ $ curl http://localhost:8080
 ```
 
 ### 결과
-<img src="./static/docker.png" width="100%">>
+<img src="./static/3.png" width="100%">>
 
 
 
@@ -433,6 +433,18 @@ $ chmod 644 script.sh
 ### 권한 확인
 ```zsh
 $ ls -l script.sh
+```
+
+### 결과
+```zsh
+7eerup@c5r1s6:/Users/7eerup/OrbStack/ubuntu/home/claude/aisw/python$ ls -l
+total 3
+drwxr-xr-x  1 7eerup  7eerup   18  4  1 14:57 data
+-rw-r--r--  1 7eerup  7eerup  520  4  1 15:27 main.py
+-rw-r--r--  1 7eerup  7eerup   31  4  1 15:48 script.sh
+7eerup@c5r1s6:/Users/7eerup/OrbStack/ubuntu/home/claude/aisw/python$ chmod 755 script.sh 
+7eerup@c5r1s6:/Users/7eerup/OrbStack/ubuntu/home/claude/aisw/python$ ./script.sh 
+Hello World
 ```
 
 ### 컴퓨터 기본 단위
