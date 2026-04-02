@@ -1,6 +1,6 @@
 import os
 
-path = "/Users/7eerup/OrbStack/ubuntu/home/claude/aisw/python/data/hello.txt"
+path = "/home/claude/aisw/python/data/hello.txt"
 
 with open(path, "r", encoding="utf-8") as f:
     print("파일 내용:", f.read())
