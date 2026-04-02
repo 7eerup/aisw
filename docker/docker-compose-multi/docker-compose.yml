@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  
+  fastapi:
+    build: .
+    container_name: fastapi-app
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+    depends_on:
+      - redis
+    volumes:
+      - ./app.py:/app/app.py
+    command: uvicorn app:app --host 0.0.0.0 --reload
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  redis-data:
