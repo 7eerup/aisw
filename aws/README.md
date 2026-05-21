@@ -56,23 +56,58 @@ VPC (10.0.0.0/16)
     * Security Group에서 80/443 인바운드를 허용해야 Nginx 또는 Docker Web Service 접근 가능
 
 2. `관리자 → EC2 SSH`
-    * SSH(22)는 관리자 IP만 접근하도록 `MyIP/32`로 제한
+    * SSH(22)는 관리자 IP만 허용
 
 3. `EC2 → 외부 인터넷`
     * EC2 `curl` 요청은 Route Table의 `0.0.0.0/0 → IGW` 경로로 인터넷에 나감
 
 
-### 핵심 조건
+
+
+| 리소스                   | 확인 위치                   | 확인 사항                    | 정리 여부 |
+| --------------------- | ----------------------- | ------------------------ | ----- |
+| EC2 Instance          | EC2 → Instances         | 실행/중지 인스턴스 삭제            |      |
+| EBS Volume            | EC2 → Volumes           | 남아 있는 볼륨 삭제              |      |
+| Elastic IP(EIP)       | EC2 → Elastic IPs       | 미사용 EIP 해제               |      |
+| Internet Gateway(IGW) | VPC → Internet Gateways | VPC 연결 해제 후 삭제           |      |
+| VPC                   | VPC → Your VPCs         | 실습용 VPC 삭제               |      |
+| Subnet                | VPC → Subnets           | Public/Private Subnet 삭제 |      |
+| Route Table           | VPC → Route Tables      | 실습용 RT 삭제                |      |
+| Security Group        | EC2 → Security Groups   | 미사용 SG 삭제                |      |
+| Load Balancer(ALB)    | EC2 → Load Balancers    | ALB 삭제                   |      |
+| Target Group          | EC2 → Target Groups     | 연결 해제 후 삭제               |      |
+
+
+
+
+### 보안 그룹 최소 권한 규칙
 
 * Public Subnet은 Internet Gateway로 향하는 기본 라우트가 필요
 * EC2는 Public IP 있어야 외부에서 직접 접근 가능
-* Security Group은 필요한 포트만 최소 범위로 허용
+* Security Group 필요한 포트만 최소 범위로 허용
+* `SSH` - 원격 접속
+* `HTTP` - 일반 웹 브라우저 접속 필요
+* `HTTPS` - 암호화 웹 서비스 제공(SSL 적용)
+* `불필요한 DB/내부 포트` - Not Allowed
+* `전체 포트 공개` - 0-65535
 
+
+### 외부 접속 검증
+* `인스턴스 생성`
+* `SG 연동`
+* `curl http://PUBLIC_IP`
+
+
+### 태그 이름 규칙 활용
+* `alias_ooo 접두어 규칙 사용`
+* `리소스 식별`
+* `비용 추적`
+* `삭제 누락 방지`
+* `운영 혼동 감소`
 
 
 ### Public Subnet Route Table의 기본 경로(0.0.0.0/0 → IGW) 필요한 이유
 
-`Public Subnet Route Table`
 * `0.0.0.0/0` → “모든 외부 네트워크 목적지”를 의미하는 기본 경로(Default Route)
 * `IGW (Internet Gateway)` → VPC와 인터넷을 연결하는 인터넷 연결 게이트웨이(출입구 역할)
 * Public Subnet 내부 EC2가 인터넷과 통신하기 위해 모든 외부 트래픽을 IGW로 보내야 하기 때문
@@ -90,9 +125,9 @@ VPC (10.0.0.0/16)
 
 
 ### Security Group과 IAM 역할 차이
-* Root 계정 = AWS 계정의 최고 소유자
-* IAM = Root 대신 사용할 사용자/역할의 권한을 관리하는 시스템
-* Security Group = 서버 네트워크(IP/Port) 접근을 제어
+* `Root 계정 = AWS 계정의 최고 소유자`
+* `IAM = Root 대신 사용할 사용자/역할의 권한을 관리하는 시스템`
+* `Security Group = 서버 네트워크(IP/Port) 접근을 제어`
 
 
 ### IAM AWS 권한 관리자
@@ -132,6 +167,25 @@ VPC (10.0.0.0/16)
 * `하나의 접속 주소 제공`
 * `ALB 추가 후 EC2 2대를 Target Group에 연결`
 * `Health Check 확인`
+
+
+### Billing에 예상치 못한 비용 발생 대처법
+* `결제 및 비용 관리`
+* `청구서`
+* `Cost Explorer`
+
+### 체크리스트
+
+| 리소스           | 확인 위치                | 정리 방법                   |
+| ------------- | -------------------- | ----------------------- |
+| EC2           | EC2 → Instances      | Terminate               |
+| Elastic IP    | EC2 → Elastic IPs    | Release                 |
+| NAT Gateway   | VPC → NAT Gateways   | Delete                  |
+| Load Balancer | EC2 → Load Balancers | Delete                  |
+| RDS           | RDS → Databases      | Delete                  |
+| EBS Volume    | EC2 → Volumes        | Delete available volume |
+| Snapshot      | EC2 → Snapshots      | Delete                  |
+| AMI           | EC2 → AMIs           | Deregister              |
 
 
 
@@ -180,3 +234,4 @@ VPC (10.0.0.0/16)
 ### Docker Container Mapping Service Deployment
 
 ![Docker Container Port Mapping](docs/screenshots/docker-webserver.png)
+
