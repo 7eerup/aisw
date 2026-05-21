@@ -3,8 +3,7 @@
 For Amazon Web Service [amazon.com](https://aws.amazon.com).
 
 ### System Architecture
-![AWS Concept Architecture](assets/image/architecture.png)
-
+![AWS Concept Architecture](docs/screenshots/architecture.png)
 
 
 ### 네트워크 구성 요소 핵심 요약
@@ -15,7 +14,6 @@ For Amazon Web Service [amazon.com](https://aws.amazon.com).
 | `Subnet` | VPC를 AZ 단위로 나눈 네트워크 영역 | Public Subnet `10.0.1.0/24` |
 | `Route Table` | Subnet의 트래픽이 어디로 갈지 결정 | `0.0.0.0/0 → IGW` |
 | `Internet Gateway` | VPC와 인터넷을 연결하는 출입구 | VPC Attach 필요 |
-
 
 
 
@@ -51,7 +49,6 @@ VPC (10.0.0.0/16)
 ```
 
 
-
 ### 트래픽 흐름 요약
 
 1. `외부 사용자 → EC2 웹 서비스`
@@ -72,43 +69,70 @@ VPC (10.0.0.0/16)
 * Security Group은 필요한 포트만 최소 범위로 허용
 
 
+
+### Public Subnet Route Table의 기본 경로(0.0.0.0/0 → IGW) 필요한 이유
+
+`Public Subnet Route Table`
+* `0.0.0.0/0` → “모든 외부 네트워크 목적지”를 의미하는 기본 경로(Default Route)
+* `IGW (Internet Gateway)` → VPC와 인터넷을 연결하는 인터넷 연결 게이트웨이(출입구 역할)
+* Public Subnet 내부 EC2가 인터넷과 통신하기 위해 모든 외부 트래픽을 IGW로 보내야 하기 때문
+
+* 기본 경로가 필요한 대표 사례
+    * 사용자가 웹 브라우저로 EC2 웹 서버 접속
+    * EC2가 Ubuntu 패키지 다운로드 (apt update)
+    * 외부 사용자 HTTP/HTTPS 접속
+
+* 기본 경로가 없을 경우 - 0.0.0.0/0 → IGW 경로가 없으면 인터넷 연결은 동작(X)
+    * 인터넷 통신 불가
+    * 웹 서버 외부 접속 실패
+    * 패키지 다운로드 실패
+
+
+
 ### Security Group과 IAM 역할 차이
 * Root 계정 = AWS 계정의 최고 소유자
 * IAM = Root 대신 사용할 사용자/역할의 권한을 관리하는 시스템
-* Security Group = EC2 네트워크 접근을 제어하는 방화벽
+* Security Group = 서버 네트워크(IP/Port) 접근을 제어
 
 
-* 대상: EC2, RDS, Load Balancer 등 네트워크 인터페이스가 있는 리소스
-* 제어 기준: IP, Port, Protocol
-* 예시: 내 IP에서만 SSH(22) 허용, 외부에서 HTTP(80)/HTTPS(443) 허용
-* 목적: 서버에 누가 어떤 네트워크 경로로 접근할 수 있는지 제한
-
-`IAM`은 AWS 리소스를 생성, 수정, 삭제, 조회할 수 있는 권한을 제어
-
-* 대상: 사용자, 그룹, 역할, 서비스 계정
-* 제어 기준: AWS API Action, Resource, Condition
-* 예시: EC2 조회만 허용, S3 특정 버킷만 접근 허용, 관리자 권한 제한
-* 목적: 누가 어떤 AWS 작업을 수행할 수 있는지 제한
-
-`Security Group`은 서버로 들어오는 길을 막거나 열고, `IAM`은 AWS에서 할 수 있는 작업 권한을 제한한다.
+### IAM AWS 권한 관리자
+* `AWS 리소스를 누가 생성·수정·삭제 가능한지 제어`
 
 
 ### 최소 권한 원칙
+* `최소 권한 원칙은 필요한 권한만 허용하고, 보안 위험 최소화 보안 원칙`
+* `0.0.0.0/0 전체 포트 허용 금지`
+* SSH(22) `MyIP`로 제한
+* `HTTP(80), HTTPS(443)처럼 외부 공개가 필요한 포트만 허용`
+* `IAM 필요한 서비스와 작업만 허용` - AmazonEC2FullAcess, AmazonVPCFullAccess
 
-* 최소 권한 원칙은 필요한 권한만 허용하고, 필요하지 않은 권한은 주지 않는 보안 원칙
 
-왜 적용하는가:
+### SSH DB 포트 공개 안되는 이유
+* 0.0.0.0/0 = 전 세계 모든 IP 접근 허용
+* DB 정보 유출 위험
+* 보안 탈취 위험
+* DB-SG 생성 및 역할 분리 - 보안 강화 인터넷 직접 차단
 
-* 계정 또는 키가 노출되어도 피해 범위를 줄일 수 있음
-* 실수로 리소스를 삭제하거나 변경하는 위험을 줄일 수 있음
-* 운영자, 애플리케이션, 서비스별 책임 범위를 명확히 나눌 수 있음
 
-어떻게 적용하는가:
+### 외부 접속 안될 때 점검 방법
+* `라우팅(Route Table) → Security Group(SG) Public IP/Public DNS → 서버 프로세스 / 로그`
 
-* SSH(22)는 `0.0.0.0/0` 대신 `MyIP/32`로 제한
-* HTTP(80), HTTPS(443)처럼 외부 공개가 필요한 포트만 허용
-* IAM에는 `AmazonEC2FullAccess` `AmazonVPCFullAccess` 필요한 서비스와 작업만 허용
-* 권한 변경 전에는 필요한 작업 범위를 먼저 확인하고, 변경 후에는 실제 동작을 검증
+
+### IAM 권한 부족 발생 시 대응 방법
+* `서비스 오류 Action 정보 확인`
+* `권한 부여`
+
+
+
+### 트래픽 증가로 네트워크 병목 현상 해결 방법
+* `EC2 1대에 모든 트래픽이 집중되는 것 문제` - CPU, 메모리, 네트워크 한계
+* `ALB(Application Load Balancer)`
+* `트래픽 분산`
+* `HTTP/HTTPS 요청 처리`
+* `하나의 접속 주소 제공`
+* `ALB 추가 후 EC2 2대를 Target Group에 연결`
+* `Health Check 확인`
+
 
 
 
@@ -130,7 +154,8 @@ VPC (10.0.0.0/16)
     * 웹 접속은 HTTP(80), HTTPS(443) 인바운드 규칙이 필요
     * SSH(22)는 전체 공개가 아니라 `MyIP/32`처럼 관리자 IP로 제한
 
-흐름을 한 줄로 보면 다음과 같다.
+
+`Public IP`는 목적지 주소이고, `Route Table + Internet Gateway`는 이동 경로이며, `Security Group`은 마지막 접근 허용 조건이다.
 
 ```text
 외부 사용자
@@ -141,74 +166,17 @@ VPC (10.0.0.0/16)
 → EC2 Web Server
 ```
 
-즉, `Public IP`는 목적지 주소이고, `Route Table + Internet Gateway`는 이동 경로이며, `Security Group`은 마지막 접근 허용 조건이다.
-
-
-### SSH 트러블슈팅
-
-
-#### 1. 증상 확인
-
-```bash
-ssh -i key.pem ubuntu@PUBLIC_IP
-```
-
-로그에서 중요한 부분은 다음과 같다.
-
-```text
-WARNING: UNPROTECTED PRIVATE KEY FILE!
-Permissions 0644 for 'awsu.pem' are too open.
-This private key will be ignored.
-Load key "key.pem": bad permissions
-Permission denied (publickey).
-```
-
-`The authenticity of host ... can't be established` 메시지는 처음 접속하는 서버를 known hosts에 등록할지 묻는 정상 확인 절차다. 실제 오류는 개인 키 파일 권한이 너무 열려 있어서 SSH 클라이언트가 키를 사용하지 않는 것이다.
-
-#### 2. 원인 가설
-
-가설:`key.pem` 파일 권한이 `0644`라서 다른 사용자도 읽을 수 있는 상태다.
-
-SSH 개인 키는 민감한 인증 정보이므로 소유자만 읽을 수 있어야 한다. 권한이 너무 넓으면 SSH가 보안상 위험하다고 판단하고 키를 무시한다.
-
-#### 3. 검증
-
-```bash
-ls -l key.pem
-```
-
-예상 문제 상태:
-
-```text
--rw-r--r--  key.pem
-```
-
-`rw-r--r--`는 소유자뿐 아니라 그룹/다른 사용자도 읽을 수 있다는 의미
-
-#### 4. 조치
-
-```bash
-chmod 400 key.pem
-ssh -i key.pem ubuntu@PUBLIC_IP
-```
-
-권한 변경 후 기대 상태:
-
-```text
--r--------  key.pem
-```
-
-`chmod 400`은 키 소유자만 읽을 수 있게 제한
-
-
-
-
 ### HTTPS
+* `인터넷 통신 내용을 암호화하는 보안 기술`
+* `DuckDNS 도메인 -> Certbot -> Let's Encrypt 인증서 발급 -> nginx HTTPS 적용`
+* `데이터 암호화` - 중간 탈취 방지
+* `서버 신뢰성 검증` - 가짜 사이트 방지
+* `브라우저 보안 표시` - 🔒 자물쇠 표시
 
-![HTTPS - Nginx DNS Service](assets/image/nginx-server.png)
+![HTTPS - Nginx DNS Service](docs/screenshots/nginx-server.png)
 
 
 
 ### Docker Container Mapping Service Deployment
 
-![Docker Container Port Mapping](assets/image/docker-webserver.png)
+![Docker Container Port Mapping](docs/screenshots/docker-webserver.png)
