@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>메모 목록</title>
+</head>
+<body>
+    <h1>메모 목록</h1>
+
+    <p>
+        <a href="/">홈으로</a>
+        <a href="/memos/new">새 메모 작성</a>
+    </p>
+
+    {% if memos %}
+        <ul>
+            {% for memo in memos %}
+                <li>
+                    <strong>{{ memo.title }}</strong>
+                    <a href="/memos/{{ memo.id }}">상세보기</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>등록된 메모가 없습니다.</p>
+    {% endif %}
+</body>
+</html>

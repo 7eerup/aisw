@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>메모 상세</title>
+</head>
+<body>
+    <h1>메모 상세</h1>
+
+    <p><strong>번호:</strong> {{ memo.id }}</p>
+    <p><strong>제목:</strong> {{ memo.title }}</p>
+    <p><strong>내용:</strong></p>
+    <p>{{ memo.content }}</p>
+    <p><strong>작성일시:</strong> {{ memo.created_at }}</p>
+
+    <p>
+        <a href="/memos">목록으로</a>
+        <a href="/memos/{{ memo.id }}/edit">수정</a>
+    </p>
+
+    <form action="/memos/{{ memo.id }}/delete" method="post">
+        <button type="submit">삭제</button>
+    </form>
+</body>
+</html>

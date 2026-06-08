@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>메모 작성</title>
+</head>
+<body>
+    {% if memo %}
+        <h1>메모 수정</h1>
+    {% else %}
+        <h1>새 메모 작성</h1>
+    {% endif %}
+
+    <form action="{{ action }}" method="post">
+        <div>
+            <label for="title">제목</label><br>
+            <input
+                type="text"
+                id="title"
+                name="title"
+                value="{{ memo.title if memo else '' }}"
+                required
+            >
+        </div>
+
+        <div>
+            <label for="content">내용</label><br>
+            <textarea
+                id="content"
+                name="content"
+                rows="5"
+                required
+            >{{ memo.content if memo else '' }}</textarea>
+        </div>
+
+        <button type="submit">저장</button>
+        <a href="/memos">취소</a>
+    </form>
+</body>
+</html>
