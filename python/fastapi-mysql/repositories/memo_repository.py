@@ -17,8 +17,8 @@ def find_by_id(db: Session, memo_id: int):
     return db.query(Memo).filter(Memo.id == memo_id).first()
 
 
-def save(db: Session, title: str, content: str):
-    memo = Memo(title=title, content=content)
+def save(db: Session, title: str, content: str, category_id: int):
+    memo = Memo(title=title, content=content, category_id=category_id)
 
     db.add(memo)
     db.commit()
@@ -27,9 +27,10 @@ def save(db: Session, title: str, content: str):
     return memo
 
 
-def update(db: Session, memo: Memo, title: str, content: str):
+def update(db: Session, memo: Memo, title: str, content: str, category_id: int):
     memo.title = title
     memo.content = content
+    memo.category_id = category_id
 
     db.commit()
     db.refresh(memo)

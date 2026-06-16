@@ -14,6 +14,18 @@
     <p style="color: red">{{ error }}</p>
     {% endif %}
 
+    <div>
+    <label>Category</label>
+    <br>
+    <select name="category_id">
+        {% for category in categories %}
+            <option value="{{ category.id }}">
+                {{ category.name }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
     <form action="{{ action }}" method="post">
       <div>
         <label for="title">제목</label><br />

@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from database import get_db
-from services import memo_service
+from services import memo_service, category_service
 
 router = APIRouter()
 
@@ -26,13 +26,15 @@ def memo_list(request: Request, keyword: str | None = None, db: Session = Depend
 
 
 @router.get("/memos/new")
-def memo_create_form(request: Request):
+def memo_create_form(request: Request, db: Session = Depends(get_db)):
+    categories = category_service.get_categories(db)
     return templates.TemplateResponse(
         request,
         "memo_form.html",
         {
             "memo": None,
-            "action": "/memos"
+            "action": "/memos",
+            "categories": categories
         }
     )
 
@@ -42,8 +44,10 @@ def memo_create(
     request: Request,
     db: Session = Depends(get_db),
     title: str = Form(""),
-    content: str = Form("")
+    content: str = Form(""),
+    category_id: int = Form(...)
 ):
+    memo_service.create_memo(db, title, content, category_id)
     
     try:
         

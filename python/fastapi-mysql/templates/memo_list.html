@@ -30,6 +30,7 @@
         <strong>{{ memo.title }}</strong>
         <button type="button" onclick="location.href='/memos/{{ memo.id }}'">상세보기</button>
         <button type="button" onclick="location.href='/memos/{{ memo.id }}/edit'">수정</button>
+        {{ memo.category.name if memo.category else "카테고리 없음" }}
       </li>
       {% endfor %}
     </ul>

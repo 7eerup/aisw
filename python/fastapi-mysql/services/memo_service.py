@@ -10,7 +10,7 @@ def get_memo(db: Session, memo_id: int):
     return memo_repository.find_by_id(db, memo_id)
 
 
-def create_memo(db: Session, title: str, content: str):
+def create_memo(db: Session, title: str, content: str, category_id: int):
     if not title.strip():
         raise ValueError(
             "제목은 필수 입력입니다."
@@ -21,16 +21,16 @@ def create_memo(db: Session, title: str, content: str):
             "내용은 필수 입력입니다."
         )
 
-    return memo_repository.save(db, title, content)
+    return memo_repository.save(db, title, content, category_id)
 
 
-def update_memo(db: Session, memo_id: int, title: str, content: str):
+def update_memo(db: Session, memo_id: int, title: str, content: str, category_id: int):
     memo = memo_repository.find_by_id(db, memo_id)
 
     if memo is None:
         return None
 
-    return memo_repository.update(db, memo, title, content)
+    return memo_repository.update(db, memo, title, content, category_id)
 
 
 def delete_memo(db: Session, memo_id: int):
