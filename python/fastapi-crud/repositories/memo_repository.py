@@ -2,8 +2,15 @@ from sqlalchemy.orm import Session
 from models.memo import Memo
 
 
-def find_all(db: Session):
-    return db.query(Memo).order_by(Memo.id.desc()).all()
+def find_all(db: Session, keyword: str | None = None):
+    query = db.query(Memo)
+
+    if keyword:
+        query = query.filter(
+            Memo.title.like(f"%{keyword}%")
+        )
+
+    return query.order_by(Memo.id.desc()).all()
 
 
 def find_by_id(db: Session, memo_id: int):

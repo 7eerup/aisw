@@ -5,6 +5,14 @@
 
 ---
 
+##
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install "fastapi[standards]" sqlalchemy
+fastapi dev
+```
+
 ## 학습 내용
 
 * FastAPI Router 사용
@@ -232,8 +240,14 @@ return {
 
 ---
 
+### SQLAlchemy
+- Python에서 데이터베이스를 다루기 위한 라이브러리
+
+### SQLAlchemy ORM
+- Python 객체(Class)와 DB 테이블을 매핑하여 CRUD를 수행하는 기능
+
 ### SQLAlchemy ORM 기반 단일 모델 CRUD 동작 원리
-* Memo라는 단일 모델을 기준으로 Router, Service, Repository를 분리하고, Repository에서 SQLAlchemy ORM을 사용해 SQLite에 CRUD를 수행
+* SQLAlchemy ORM은 Memo 클래스를 memos 테이블과 매핑하고 Repository에서 db.query() db.add() db.commit()을 사용해 SQL을 직접 작성하지 않고 CRUD를 수행
 
 #### main.py
 * FastAPI 애플리케이션 생성
@@ -244,56 +258,42 @@ return {
 * Router 등록
 * 홈 화면 출력 - http://localhost:8000
 
-#### memo.py - Python 클래스와 SQLite 테이블 연결
-* 메모 데이터를 표현하는 SQLAlchemy ORM 모델 파일로, Memo 클래스와 SQLite의 memos 테이블을 매핑하여 CRUD 작업의 기준이 되는 데이터 구조를 정의
-
-
-#### database.py - SQLite와 SQLAlchemy를 연결 관리 DB 설정 파일
-```py
-# SQLite 연결 설정
-DATABASE_URL = "sqlite:///./database.db"
-
-# FastAPI ↔ SQLite 연결 통로 생성
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
-# 조회, 저장, 수정, 삭제 시 사용
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
-```
-
 
 #### models/memo.py
-* Python 클래스 Memo 모델이 SQLite 데이터베이스 memos 테이블과 연결
-```py
-class Memo(Base):
-    __tablename__ = "memos"
-```
+* SQLite 데이터베이스 테이블 구조 정의
+* 컬럼 정의
 
-#### DB 연결 - database.py
-* SessionLocal()로 DB 세션을 만들고, 이 세션을 통해 SQLite와 통신
-```py
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
-```
-
-#### Repository에서 CRUD 실행 - memo_repository.py
-* 목록 조회 - 등록 - 수정 - 삭제
+#### database.py
+* SQLite와 SQLAlchemy를 연결 관리 DB 설정 파일
 
 
-#### 전체 흐름
-브라우저 요청
- ↓
-Router
- ↓
-Service
- ↓
-Repository
- ↓
-SQLAlchemy ORM
- ↓
-SQLite
+#### repositories/memo_repository.py
+- CRUD 수행(조회 저장 수정 삭제)
+
+
+#### services/memo_service.py
+- 폼 유효성 검사
+- 로직 처리
+
+
+#### routers/memo_router.py
+- HTTP 요청/응답 처리
+- GET/POST 요청 처리
+- 브라우저에서 전달한 Form 데이터 수신 역할
+- TemplateResponse 반환
+- RedirectResponse 반환
+
+
+
+### HTML Form()
+- 사용자가 폼에 입력한 값은 HTTP 요청으로 서버에 전달되며 Jinja2 SSR 구조에서는 FastAPI의 Form() 파라미터가 이를 받아 처리
+
+### Jinja2 SSR(Server Side Rendering)
+- FastAPI 서버가 HTML을 생성해서 브라우저에 전달하는 방식
+
+### CORS(Cross-Origin Resource Sharing)
+- 다른 Origin의 서버와 통신할 수 있도록 브라우저가 허용하는 정책
+- Origin 구성(프로토콜+호스트+포트)
+- http://localhost:3000 <-> http://localhost:8000
+
+

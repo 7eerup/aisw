@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, status
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -12,13 +12,16 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/memos")
-def memo_list(request: Request, db: Session = Depends(get_db)):
-    memos = memo_service.get_memos(db)
+def memo_list(request: Request, keyword: str | None = None, db: Session = Depends(get_db)):
+    memos = memo_service.get_memos(db, keyword)
 
     return templates.TemplateResponse(
         request,
         "memo_list.html",
-        {"memos": memos}
+        {
+            "memos": memos,
+            "keyword": keyword
+         },
     )
 
 
@@ -36,16 +39,34 @@ def memo_create_form(request: Request):
 
 @router.post("/memos")
 def memo_create(
+    request: Request,
     db: Session = Depends(get_db),
-    title: str = Form(...),
-    content: str = Form(...)
+    title: str = Form(""),
+    content: str = Form("")
 ):
-    memo_service.create_memo(db, title, content)
+    
+    try:
 
-    return RedirectResponse(
-        url="/memos",
-        status_code=303
-    )
+        memo_service.create_memo(db, title, content)
+
+        return RedirectResponse(
+            url="/memos",
+            status_code=303
+        )
+
+    except ValueError as e:
+
+        return templates.TemplateResponse(
+            request,
+            "memo_form.html",
+            {
+                "memo": None,
+                "action": "/memos",
+                "error": str(e),
+                "title": title,
+                "content": content
+            }
+        )
 
 
 @router.get("/memos/{memo_id}")
@@ -59,8 +80,9 @@ def memo_detail(
     if memo is None:
         return templates.TemplateResponse(
             request,
-            "memo_not_found.html",
-            {}
+            "404.html",
+            {},
+            status_code=status.HTTP_404_NOT_FOUND
         )
 
     return templates.TemplateResponse(
@@ -81,8 +103,9 @@ def memo_edit_form(
     if memo is None:
         return templates.TemplateResponse(
             request,
-            "memo_not_found.html",
-            {}
+            "404.html",
+            {},
+            status_code=status.HTTP_404_NOT_FOUND
         )
 
     return templates.TemplateResponse(
@@ -99,9 +122,10 @@ def memo_edit_form(
 def memo_update(
     memo_id: int,
     db: Session = Depends(get_db),
-    title: str = Form(...),
-    content: str = Form(...)
+    title: str = Form(""),
+    content: str = Form("")
 ):
+    
     memo_service.update_memo(db, memo_id, title, content)
 
     return RedirectResponse(
