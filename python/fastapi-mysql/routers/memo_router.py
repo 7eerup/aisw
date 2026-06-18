@@ -12,15 +12,18 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/memos")
-def memo_list(request: Request, keyword: str | None = None, db: Session = Depends(get_db)):
-    memos = memo_service.get_memos(db, keyword)
+def memo_list(request: Request, keyword: str | None = None, category_id: int | None = None, db: Session = Depends(get_db)):
+    memos = memo_service.get_memos(db, keyword, category_id)
+    categories = category_service.get_categories(db)
 
     return templates.TemplateResponse(
         request,
         "memo_list.html",
         {
             "memos": memos,
-            "keyword": keyword
+            "keyword": keyword,
+            "category_id": category_id,
+            "categories": categories,
          }
     )
 
@@ -28,6 +31,7 @@ def memo_list(request: Request, keyword: str | None = None, db: Session = Depend
 @router.get("/memos/new")
 def memo_create_form(request: Request, db: Session = Depends(get_db)):
     categories = category_service.get_categories(db)
+
     return templates.TemplateResponse(
         request,
         "memo_form.html",
@@ -43,15 +47,14 @@ def memo_create_form(request: Request, db: Session = Depends(get_db)):
 def memo_create(
     request: Request,
     db: Session = Depends(get_db),
-    title: str = Form(""),
-    content: str = Form(""),
-    category_id: int = Form(...)
+    title: str = Form(...),
+    content: str = Form(...),
+    category_id: int | None = Form(None)
 ):
-    memo_service.create_memo(db, title, content, category_id)
     
     try:
         
-        memo_service.create_memo(db, title, content)
+        memo_service.create_memo(db, title, content, category_id)
 
         return RedirectResponse(
             url="/memos",
@@ -59,6 +62,7 @@ def memo_create(
         )
 
     except ValueError as e:
+        categories = category_service.get_categories(db)
 
         return templates.TemplateResponse(
             request,
@@ -68,7 +72,8 @@ def memo_create(
                 "action": "/memos",
                 "error": str(e),
                 "title": title,
-                "content": content
+                "content": content,
+                "categories": categories
             }
         )
 
@@ -103,6 +108,7 @@ def memo_edit_form(
     db: Session = Depends(get_db)
 ):
     memo = memo_service.get_memo(db, memo_id)
+    categories = category_service.get_categories(db)
 
     if memo is None:
         return templates.TemplateResponse(
@@ -117,6 +123,7 @@ def memo_edit_form(
         "memo_form.html",
         {
             "memo": memo,
+            "categories": categories,
             "action": f"/memos/{memo_id}/edit"
         }
     )
@@ -127,9 +134,10 @@ def memo_update(
     memo_id: int,
     db: Session = Depends(get_db),
     title: str = Form(...),
-    content: str = Form(...)
+    content: str = Form(...),
+    category_id: int | None = Form(None)
 ):
-    memo_service.update_memo(db, memo_id, title, content)
+    memo_service.update_memo(db, memo_id, title, content, category_id)
 
     return RedirectResponse(
         url=f"/memos/{memo_id}",
