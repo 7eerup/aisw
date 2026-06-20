@@ -9,7 +9,7 @@
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install "fastapi[standards]" sqlalchemy
+pip install "fastapi[standard]" sqlalchemy
 fastapi dev
 ```
 
@@ -78,26 +78,11 @@ fastapi-crud/
     ├── memo_list.html
     ├── memo_detail.html
     ├── memo_form.html
-    └── memo_not_found.html
+    └── 404.html
 ```
 
 ---
 
-## FastAPI 실행 구조
-```
-uvicorn main:app --reload
-          │
-          ▼
-     FastAPI
-          │
- ┌────────┼────────┐
- │        │        │
- ▼        ▼        ▼
- /      /docs   /redoc
- │        │        │
- ▼        ▼        ▼
-홈화면  Swagger  ReDoc
-```
 
 ## 기능 구현
 
@@ -115,26 +100,10 @@ uvicorn main:app --reload
 
 ---
 
-## CRUD 화면 흐름
-
-```text
-홈
- ├─ 메모 목록
- │   ├─ 상세 조회
- │   │   ├─ 수정
- │   │   └─ 삭제
- │   └─ 새 메모 작성
- └─ 새 메모 작성
-```
-
----
-
 ## 브라우저 요청 FastAPI 서버에서 "라우터 → 서비스 → 저장소 → 템플릿" 흐름
-* 사용자가 /memos에 접속하면 Router가 요청을 받고 DB Session을 생성한 뒤 Service에 전달
-* Service는 Repository를 통해 SQLAlchemy ORM으로 SQLite를 조회하고, 조회 결과를 다시 Router로 반환
-* Router는 Jinja2 Template에 데이터를 전달하여 HTML을 생성하고 브라우저에 응답
+- 사용자가 저장 버튼을 클릭하면 POST /memos 요청이 발생한다. FastAPI는 Form 데이터를 읽고 타입 검증을 수행한 뒤 Router의 memo_create()를 실행한다. Router는 Service의 create_memo()를 호출하고, Service에서는 제목과 내용이 비어 있는지 검증한다. 검증에 실패하면 ValueError를 발생시키고, 성공하면 Repository의 save()를 호출한다. Repository에서는 Memo 객체를 생성하고 add(), commit(), refresh()를 통해 DB에 저장한다. 저장이 완료되면 RedirectResponse(303)를 반환하고 브라우저는 GET /memos를 다시 요청하여 목록 화면을 렌더링한다.
 
-```
+```python
 사용자 클릭
       │
       ▼
@@ -185,43 +154,43 @@ HTML 생성
       │
       ▼
 브라우저 출력
-(200 OK)
 ```
-
-* http://127.0.0.1:8000/memos
-* FastAPI가 URL을 확인 - router.get("/memos") 실행
-* DB Session 생성 - FastAPI가 SQLite와 통신하기 위해 DB 연결(Session) 과정
-* DB Session 생성 -> Router 전달 -> 작업 완료 -> 자동 close()
-* Service 호출 - Router가 받은 요청을 Service에게 "목록 요청" 이라고 넘기는 과정
-* Service 처리 = Repository 호출
-* Service 따로 두는 이유는 Router Service Repository 역할 섞임 방지
-* Repository 처리 - 서버 내부에서 DB를 등록, 수정, 삭제, 조회, 저장하는 작업
-* ORM 실행 → Memo 객체 → SQL 자동 생성 → SQLite 실행
-* SQLite 조회 → memos 테이블 검색 → 조회 결과 반환
-* 역방향 전달 SQLite -> Repository -> Service -> Router
-* Template 렌더링
-* HTML 응답 -> 브라우저로 전송 200 OK
 
 ---
 
 ### GET과 POST의 역할 차이와 분리하는 이유
-* 만약 등록 기능 GET 만든다면 브라우저 새로고침 동일한 등록 요청 재실행 중복 저장 문제 발생 방지
+- GET - 서버에서 데이터를 조회(Read)하기 위한 요청 방식
+- @router.get("/memos") 목록 조회
+- @router.get("/memos/new") 등록 화면
+- @router.get("/memos/{memo_id}") 상세 조회
 
-| 구분       | GET          | POST         |
-| -------- | ------------ | ------------ |
-| 역할       |  조회       | 등록/수정/삭제       |
-| 예시       | 목록 조회, 상세 조회 | 등록, 수정, 삭제   |
-| DB 변경   | 없음           | 있음           |
-| PRG 필요   | X           | O              |
-| F5 영향 | 안전           | 중복 실행 위험     |
+- POST - 서버에 새로운 데이터를 Create Update Delete 처리하기 위한 요청 방식
+- @router.post("/memos") 생성
+- @router.post("/memos/{memo_id}/edit") 수정
+- @router.post("/memos/{memo_id}/delete") 삭제
+- 만약 등록 기능 GET 만든다면 브라우저 새로고침 동일한 등록 요청 재실행 중복 저장 문제 발생 방지
+
+
+메모 생성(Create)
+사용자 입력 → 저장 버튼 클릭 → POST /memos → Router → Service → Repository → SQLAlchemy ORM → DB INSERT → RedirectResponse(303) → GET /memos → 목록 화면 출력
+
+
+메모 목록 조회(Read)
+브라우저 접속 → GET /memos → Router → Service → Repository → SQLAlchemy ORM → SELECT * FROM memos → Jinja2 TemplateResponse → HTML 렌더링 → 브라우저 출력
+
+
+메모 수정(Update)
+수정 버튼 클릭 → GET /memos/{id}/edit → 수정 화면 출력 → 저장 버튼 클릭 → POST /memos/{id}/edit → Router → Service → Repository → UPDATE memos → RedirectResponse(303) → GET /memos → 목록 출력
+
+
+메모 삭제(Delete)
+삭제 버튼 클릭 → POST /memos/{id}/delete → Router → Service → Repository → DELETE FROM memos → RedirectResponse(303) → GET /memos → 목록 출력
+
 
 --- 
 
 ### HTML Form 입력값이 서버로 전달되는 과정
-* 사용자 HTML Form 입력
-* POST /memos 저장 버튼 클릭 - 서버 데이터 전송
-* Router에서 Form 수신 - FastAPI가 자동으로 처리
-* Service 전달 -> Repository 저장 -> SQLite 저장
+* 사용자 HTML Form 입력 -> POST /memos 저장 버튼 클릭 - 서버 데이터 전송 -> Router에서 Form 수신 FastAPI가 자동으로 처리 -> Service 전달 -> Repository 저장 -> SQLite 저장
 
 사용자가 HTML Form에 입력한 데이터를 서버로 전송하면 FastAPI가 Form 파라미터로 값을 받아 Python 변수로 변환하고, 이후 Service와 Repository를 거쳐 데이터베이스에 저장
 
@@ -245,9 +214,12 @@ return {
 
 ### SQLAlchemy ORM
 - Python 객체(Class)와 DB 테이블을 매핑하여 CRUD를 수행하는 기능
+- SQLAlchemy Session의 query()는 SELECT 조회, add()는 INSERT 대상 등록, commit()은 실제 INSERT·UPDATE·DELETE를 데이터베이스에 반영하는 역할을 한다. 또한 delete()는 삭제 대상을 등록하고, refresh()는 저장 후 데이터베이스의 최신 상태를 다시 조회하여 객체에 반영한다.
 
 ### SQLAlchemy ORM 기반 단일 모델 CRUD 동작 원리
 * SQLAlchemy ORM은 Memo 클래스를 memos 테이블과 매핑하고 Repository에서 db.query() db.add() db.commit()을 사용해 SQL을 직접 작성하지 않고 CRUD를 수행
+
+---
 
 #### main.py
 * FastAPI 애플리케이션 생성
@@ -283,10 +255,7 @@ return {
 - TemplateResponse 반환
 - RedirectResponse 반환
 
-
-
-### HTML Form()
-- 사용자가 폼에 입력한 값은 HTTP 요청으로 서버에 전달되며 Jinja2 SSR 구조에서는 FastAPI의 Form() 파라미터가 이를 받아 처리
+---
 
 ### Jinja2 SSR(Server Side Rendering)
 - FastAPI 서버가 HTML을 생성해서 브라우저에 전달하는 방식
@@ -297,3 +266,17 @@ return {
 - http://localhost:3000 <-> http://localhost:8000
 
 
+---
+
+### Advanced Functions
+- Router - keyword 쿼리 파라미터 받기
+- Service - 검색어를 Repository로 전달
+- Repository - SQLAlchemy filter()와 like()로 제목 포함 검색 수행
+- Template - 검색 입력창과 결과 목록 출력
+
+- 목록 화면에서 검색어를 입력하면 GET /memos?keyword=검색어 요청이 발생하고, Router가 keyword를 받아 Service를 거쳐 Repository에서 Memo.title.like("%검색어%") 조건으로 DB를 조회한 뒤 결과를 다시 memo_list.html에 렌더링한다.
+
+
+- 간단한 검증 기능은 Service 계층에서 수동 검증 방식으로 구현하였다. 사용자가 저장 버튼을 클릭하면 Router가 Form 데이터를 받아 Service의 create_memo()를 호출한다. Service에서는 title.strip()과 content.strip()을 사용하여 필수값 입력 여부를 확인하고, 값이 비어 있으면 ValueError를 발생시킨다. Router는 해당 예외를 처리하여 TemplateResponse로 다시 입력 화면을 반환하고, error 메시지를 화면에 출력한다. 검증을 통과한 경우에만 Repository의 save()가 호출되어 DB에 저장된다.
+
+- onsubmit = 폼 제출 이벤트
