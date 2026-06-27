@@ -11,5 +11,17 @@
 
     <button type="button" onclick="location.href = '/memos'">메모 목록 보기</button>
     <button type="button" onclick="location.href = '/memos/new'">새 메모 작성</button>
+
+    {% if request.session.get("user_id") %}
+    <p>{{ request.session.get("name") }}님 환영합니다.</p>
+
+    <form action="/logout" method="post">
+        <button type="submit">로그아웃</button>
+    </form>
+
+{% else %}
+    <button type="button" onclick="location.href = '/login'">로그인</button>
+    <button type="button" onclick="location.href = '/signup'">회원가입</button>
+{% endif %}
   </body>
 </html>
