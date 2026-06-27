@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from database import Base, engine
 from models.memo import Memo
+from models.user import User
 from routers.memo_router import router as memo_router
 
 load_dotenv()
