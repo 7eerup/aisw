@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from services import memo_service
+from auth.auth_service import require_login
 
 router = APIRouter()
 
@@ -12,7 +13,15 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/memos")
-def memo_list(request: Request, keyword: str | None = None, db: Session = Depends(get_db)):
+def memo_list(
+    request: Request, 
+    keyword: str | None = None, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(require_login)
+):
+    if current_user is None:
+        return RedirectResponse("/login", status_code=303)
+
     memos = memo_service.get_memos(db, keyword)
 
     return templates.TemplateResponse(
@@ -20,19 +29,28 @@ def memo_list(request: Request, keyword: str | None = None, db: Session = Depend
         "memo_list.html",
         {
             "memos": memos,
-            "keyword": keyword
+            "keyword": keyword,
+            "current_user": current_user,
          },
     )
 
 
 @router.get("/memos/new")
-def memo_create_form(request: Request):
+def memo_create_form(
+    request: Request, 
+    current_user = Depends(require_login)
+):
+
+    if current_user is None:
+        return RedirectResponse("/login", status_code=303)
+
     return templates.TemplateResponse(
         request,
         "memo_form.html",
         {
             "memo": None,
-            "action": "/memos"
+            "action": "/memos",
+            "current_user": current_user
         }
     )
 
@@ -42,8 +60,11 @@ def memo_create(
     request: Request,
     db: Session = Depends(get_db),
     title: str = Form(""),
-    content: str = Form("")
+    content: str = Form(""),
+    current_user = Depends(require_login)
 ):
+    if current_user is None:
+        return RedirectResponse("/login", status_code=303)
     
     try:
 
@@ -64,7 +85,8 @@ def memo_create(
                 "action": "/memos",
                 "error": str(e),
                 "title": title,
-                "content": content
+                "content": content,
+                "current_user": current_user
             }
         )
 
@@ -73,8 +95,12 @@ def memo_create(
 def memo_detail(
     memo_id: int,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_login)
 ):
+    if current_user is None:
+        return RedirectResponse("/login", status_code=303)
+
     memo = memo_service.get_memo(db, memo_id)
 
     if memo is None:
@@ -88,7 +114,10 @@ def memo_detail(
     return templates.TemplateResponse(
         request,
         "memo_detail.html",
-        {"memo": memo}
+        {
+            "memo": memo, 
+            "current_user": current_user
+        }
     )
 
 
@@ -96,8 +125,12 @@ def memo_detail(
 def memo_edit_form(
     memo_id: int,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_login)
 ):
+    if current_user is None:
+        return RedirectResponse("/login", status_code=303)
+
     memo = memo_service.get_memo(db, memo_id)
 
     if memo is None:
@@ -113,7 +146,8 @@ def memo_edit_form(
         "memo_form.html",
         {
             "memo": memo,
-            "action": f"/memos/{memo_id}/edit"
+            "action": f"/memos/{memo_id}/edit",
+            "current_user": current_user
         }
     )
 
@@ -123,9 +157,13 @@ def memo_update(
     memo_id: int,
     db: Session = Depends(get_db),
     title: str = Form(""),
-    content: str = Form("")
+    content: str = Form(""),
+    current_user = Depends(require_login)
 ):
-    
+
+    if current_user is None:
+        return RedirectResponse("/login", status_code=303)
+
     memo_service.update_memo(db, memo_id, title, content)
 
     return RedirectResponse(
@@ -137,8 +175,13 @@ def memo_update(
 @router.post("/memos/{memo_id}/delete")
 def memo_delete(
     memo_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(require_login)
 ):
+
+    if current_user is None:
+        return RedirectResponse("/login", status_code=303)
+
     memo_service.delete_memo(db, memo_id)
 
     return RedirectResponse(
