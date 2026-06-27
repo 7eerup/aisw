@@ -9,6 +9,7 @@ from database import Base, engine
 from models.memo import Memo
 from models.user import User
 from routers.memo_router import router as memo_router
+from routers.auth_router import router as auth_router
 
 load_dotenv()
 
@@ -22,6 +23,7 @@ app.add_middleware(
 templates = Jinja2Templates(directory="templates")
 
 app.include_router(memo_router)
+app.include_router(auth_router)
 
 Base.metadata.create_all(bind=engine)
 
