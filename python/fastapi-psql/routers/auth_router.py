@@ -53,3 +53,42 @@ def logout(request: Request):
         url="/",
         status_code=status.HTTP_303_SEE_OTHER
     )
+
+
+@router.get("/signup")
+def signup_form(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "signup.html",
+        {"error": None}
+    )
+
+
+@router.post("/signup")
+def signup(
+    request: Request,
+    username: str = Form(""),
+    password: str = Form(""),
+    name: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    if not username.strip():
+        return templates.TemplateResponse(request, "signup.html", {"error": "아이디는 필수입니다."})
+
+    if not password.strip():
+        return templates.TemplateResponse(request, "signup.html", {"error": "비밀번호는 필수입니다."})
+
+    if not name.strip():
+        return templates.TemplateResponse(request, "signup.html", {"error": "이름은 필수입니다."})
+
+    existing_user = user_service.get_user_by_username(db, username)
+
+    if existing_user:
+        return templates.TemplateResponse(request, "signup.html", {"error": "이미 사용 중인 아이디입니다."})
+
+    user_service.create_user(db, username, password, name)
+
+    return RedirectResponse(
+        url="/login",
+        status_code=status.HTTP_303_SEE_OTHER
+    )
