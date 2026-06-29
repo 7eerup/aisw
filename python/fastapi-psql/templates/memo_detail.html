@@ -1,25 +1,32 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <title>메모 상세</title>
-  </head>
-  <body>
-    <h1>메모 상세</h1>
 
-    <p><strong>번호:</strong> {{ memo.id }}</p>
-    <p><strong>제목:</strong> {{ memo.title }}</p>
-    <p><strong>내용:</strong></p>
-    <p>{{ memo.content }}</p>
-    <p><strong>작성일시:</strong> {{ memo.created_at }}</p>
+<head>
+  <meta charset="UTF-8" />
+  <title>메모 상세</title>
+</head>
 
-    <p>
-      <button type="button" onclick="location.href = '/memos'">목록</button>
-      <button type="button" onclick="location.href='/memos/{{ memo.id }}/edit'">수정</button>
-    </p>
+<body>
+  <h1>메모 상세</h1>
+  <p>
+    <strong>카테고리</strong>
+    {{ memo.category.name if memo.category else "없음" }}
+  </p>
 
-    <form action="/memos/{{ memo.id }}/delete" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-      <button type="submit">삭제</button>
-    </form>
-  </body>
+  <p><strong>번호:</strong> {{ memo.id }}</p>
+  <p><strong>제목:</strong> {{ memo.title }}</p>
+  <p><strong>내용:</strong></p>
+  <p>{{ memo.content }}</p>
+  <p><strong>작성일시:</strong> {{ memo.created_at }}</p>
+
+  <p>
+    <button type="button" onclick="location.href = '/memos'">목록</button>
+    <button type="button" onclick="location.href='/memos/{{ memo.id }}/edit'">수정</button>
+  </p>
+
+  <form action="/memos/{{ memo.id }}/delete" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+    <button type="submit">삭제</button>
+  </form>
+</body>
+
 </html>
