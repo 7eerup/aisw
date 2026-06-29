@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from services import memo_service
+from services import category_service
 from auth.auth_service import require_login
 
 router = APIRouter()
@@ -38,11 +39,14 @@ def memo_list(
 @router.get("/memos/new")
 def memo_create_form(
     request: Request,
+    db: Session = Depends(get_db),
     current_user = Depends(require_login)
 ):
 
     if current_user is None:
         return RedirectResponse("/login", status_code=303)
+    
+    categories = category_service.get_categories(db)
 
     return templates.TemplateResponse(
         request,
@@ -51,6 +55,7 @@ def memo_create_form(
             "memo": None,
             "action": "/memos",
             "current_user": current_user,
+            "categories": categories
         }
     )
 
