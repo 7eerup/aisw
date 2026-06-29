@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
-from datetime import datetime
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 
+from datetime import datetime
 from database import Base
 
 
@@ -11,3 +12,16 @@ class Memo(Base):
     title = Column(String(100), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+
+    user = relationship(
+        "User",
+        back_populates="memos"
+    )
+
+    category = relationship(
+        "Category",
+        back_populates="memos"
+    )

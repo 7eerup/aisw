@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from database import Base, engine
 from models.memo import Memo
 from models.user import User
+from models.category import Category
+
 from routers.memo_router import router as memo_router
 from routers.auth_router import router as auth_router
 
