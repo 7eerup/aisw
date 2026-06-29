@@ -2,8 +2,11 @@ from sqlalchemy.orm import Session
 from models.memo import Memo
 
 
-def find_all(db: Session, keyword: str | None = None):
+def find_all(db: Session, keyword: str | None = None, user_id=None):
     query = db.query(Memo)
+
+    if user_id is not None:
+        query = query.filter(Memo.user_id == user_id)
 
     if keyword:
         query = query.filter(
@@ -17,9 +20,7 @@ def find_by_id(db: Session, memo_id: int):
     return db.query(Memo).filter(Memo.id == memo_id).first()
 
 
-def save(db: Session, title: str, content: str):
-    memo = Memo(title=title, content=content)
-
+def save(db, memo):
     db.add(memo)
     db.commit()
     db.refresh(memo)

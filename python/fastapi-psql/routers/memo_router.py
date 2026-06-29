@@ -22,7 +22,7 @@ def memo_list(
     if current_user is None:
         return RedirectResponse("/login", status_code=303)
 
-    memos = memo_service.get_memos(db, keyword)
+    memos = memo_service.get_memos(db, keyword, current_user.id)
 
     return templates.TemplateResponse(
         request,
@@ -37,7 +37,7 @@ def memo_list(
 
 @router.get("/memos/new")
 def memo_create_form(
-    request: Request, 
+    request: Request,
     current_user = Depends(require_login)
 ):
 
@@ -50,7 +50,7 @@ def memo_create_form(
         {
             "memo": None,
             "action": "/memos",
-            "current_user": current_user
+            "current_user": current_user,
         }
     )
 
@@ -61,6 +61,7 @@ def memo_create(
     db: Session = Depends(get_db),
     title: str = Form(""),
     content: str = Form(""),
+    category_id: int | None = Form(None),
     current_user = Depends(require_login)
 ):
     if current_user is None:
@@ -68,7 +69,7 @@ def memo_create(
     
     try:
 
-        memo_service.create_memo(db, title, content)
+        memo_service.create_memo(db, title, content, current_user.id, category_id)
 
         return RedirectResponse(
             url="/memos",
