@@ -28,9 +28,10 @@ def save(db, memo):
     return memo
 
 
-def update(db: Session, memo: Memo, title: str, content: str):
+def update(db: Session, memo: Memo, title: str, content: str,  category_id=None):
     memo.title = title
     memo.content = content
+    memo.category_id = category_id
 
     db.commit()
     db.refresh(memo)

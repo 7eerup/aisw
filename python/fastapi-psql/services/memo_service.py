@@ -29,13 +29,13 @@ def create_memo(db, title, content, user_id, category_id=None):
     return memo_repository.save(db, memo)
 
 
-def update_memo(db: Session, memo_id: int, title: str, content: str):
+def update_memo(db: Session, memo_id: int, title: str, content: str, category_id=None):
     memo = memo_repository.find_by_id(db, memo_id)
 
     if memo is None:
         return None
 
-    return memo_repository.update(db, memo, title, content)
+    return memo_repository.update(db, memo, title, content, category_id)
 
 
 def delete_memo(db: Session, memo_id: int):

@@ -146,6 +146,8 @@ def memo_edit_form(
             {},
             status_code=status.HTTP_404_NOT_FOUND
         )
+    
+    categories = category_service.get_categories(db)
 
     return templates.TemplateResponse(
         request,
@@ -153,7 +155,8 @@ def memo_edit_form(
         {
             "memo": memo,
             "action": f"/memos/{memo_id}/edit",
-            "current_user": current_user
+            "current_user": current_user,
+            "categories": categories
         }
     )
 
@@ -161,20 +164,34 @@ def memo_edit_form(
 @router.post("/memos/{memo_id}/edit")
 def memo_update(
     memo_id: int,
-    db: Session = Depends(get_db),
+    request: Request,
     title: str = Form(""),
     content: str = Form(""),
-    current_user = Depends(require_login)
+    category_id: int | None = Form(None),
+    db: Session = Depends(get_db),
+    current_user=Depends(require_login),
 ):
-
     if current_user is None:
         return RedirectResponse("/login", status_code=303)
 
-    memo_service.update_memo(db, memo_id, title, content)
+    memo = memo_service.update_memo(
+        db,
+        memo_id,
+        title,
+        content,
+        category_id,
+    )
+
+    if memo is None:
+        return templates.TemplateResponse(
+            request,
+            "404.html",
+            status_code=404,
+        )
 
     return RedirectResponse(
         url=f"/memos/{memo_id}",
-        status_code=303
+        status_code=303,
     )
 
 
