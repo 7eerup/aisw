@@ -195,6 +195,26 @@ def memo_update(
     )
 
 
+@router.post("/memos/{memo_id}/status")
+def memo_status_toggle(
+    memo_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_login),
+):
+    if current_user is None:
+        return RedirectResponse("/login", status_code=303)
+
+    memo = memo_service.toggle_memo_status(db, memo_id)
+
+    if memo is None:
+        return RedirectResponse("/memos", status_code=303)
+
+    return RedirectResponse(
+        url=f"/memos/{memo_id}",
+        status_code=303,
+    )
+
+
 @router.post("/memos/{memo_id}/delete")
 def memo_delete(
     memo_id: int,

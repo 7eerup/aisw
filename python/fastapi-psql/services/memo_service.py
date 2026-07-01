@@ -38,6 +38,17 @@ def update_memo(db: Session, memo_id: int, title: str, content: str, category_id
     return memo_repository.update(db, memo, title, content, category_id)
 
 
+def toggle_memo_status(db, memo_id: int):
+    memo = memo_repository.find_by_id(db, memo_id)
+
+    if memo is None:
+        return None
+
+    new_status = "done" if memo.status == "draft" else "draft"
+
+    return memo_repository.update_status(db, memo, new_status)
+
+
 def delete_memo(db: Session, memo_id: int):
     memo = memo_repository.find_by_id(db, memo_id)
 

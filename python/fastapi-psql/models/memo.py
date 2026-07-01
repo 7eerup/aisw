@@ -12,6 +12,7 @@ class Memo(Base):
     title = Column(String(100), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
+    status = Column(String(20), nullable=False, default="draft")
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)

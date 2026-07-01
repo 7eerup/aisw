@@ -15,8 +15,22 @@
 
   <p><strong>번호:</strong> {{ memo.id }}</p>
   <p><strong>제목:</strong> {{ memo.title }}</p>
-  <p><strong>내용:</strong></p>
-  <p>{{ memo.content }}</p>
+  <p><strong>내용:</strong> {{ memo.content }} </p>
+  <p><strong>상태:</strong> {% if memo.status == "done" %}
+    완료
+    {% else %}
+    미완료
+    {% endif %}</p>
+
+  <form action="/memos/{{ memo.id }}/status" method="post">
+    <button type="submit">
+      {% if memo.status == "done" %}
+      미완료로 변경
+      {% else %}
+      완료로 변경
+      {% endif %}
+    </button>
+  </form>
   <p><strong>작성일시:</strong> {{ memo.created_at }}</p>
 
   <p>

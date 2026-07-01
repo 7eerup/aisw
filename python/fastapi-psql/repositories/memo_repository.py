@@ -39,6 +39,13 @@ def update(db: Session, memo: Memo, title: str, content: str,  category_id=None)
     return memo
 
 
+def update_status(db, memo, status):
+    memo.status = status
+    db.commit()
+    db.refresh(memo)
+    return memo
+
+
 def delete(db: Session, memo: Memo):
     db.delete(memo)
     db.commit()
