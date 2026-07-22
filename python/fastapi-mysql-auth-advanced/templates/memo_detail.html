@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>메모 상세</title>
+</head>
+
+<body>
+
+    <h1>메모 상세</h1>
+    <hr>
+
+    <p>번호 : {{ memo.id }}</p>
+
+    <p>제목 : {{ memo.title }}</p>
+
+    <p>내용 : {{ memo.content }}</p>
+
+    <p>작성일 : {{ memo.created_at }}</p>
+
+    <form action="/memos/{{ memo.id }}/status" method="post" style="display: inline;">
+
+        상태:
+
+        {% if memo.status == "done" %}
+        완료
+        {% else %}
+        미완료
+        {% endif %}
+
+        <button type="submit">
+            {% if memo.status == "done" %}
+            미완료
+            {% else %}
+            완료
+            {% endif %}
+        </button>
+    </form>
+
+    <p>카테고리:
+        {% if memo.category %}
+        {{ memo.category.name }}
+        {% else %}
+        없음
+        {% endif %}
+    </p>
+    <hr>
+
+    <p>
+        <button onclick="location.href='/memos/{{ memo.id }}/edit'">
+            수정
+        </button>
+    </p>
+
+    <form action="/memos/{{ memo.id }}/delete" method="post" style="display: inline;"
+        onsubmit="return confirm('이 메모를 삭제하시겠습니까?');">
+
+        <button type="submit">
+            삭제
+        </button>
+
+    </form>
+
+    <p>
+        <button onclick="location.href='/memos'">
+            목록
+        </button>
+    </p>
+
+</body>
+
+</html>

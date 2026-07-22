@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+
+    {% if memo %}
+    <title>메모 수정</title>
+    {% else %}
+    <title>메모 등록</title>
+    {% endif %}
+</head>
+
+<body>
+
+    <h1>
+        {% if memo %}
+        메모 수정
+        {% else %}
+        메모 등록
+        {% endif %}
+    </h1>
+
+    <hr>
+
+    {% if error %}
+    <p>
+        <strong>{{ error }}</strong>
+    </p>
+    {% endif %}
+
+    <form action="{{ action }}" method="post">
+
+        <p>
+            <label for="category_id">카테고리</label>
+        </p>
+
+        <select id="category_id" name="category_id">
+            <option value="">선택 안 함</option>
+
+            {% for category in categories %}
+            <option value="{{ category.id }}" {% if selected_category_id is defined and
+                selected_category_id==category.id %} selected {% elif selected_category_id is not defined and memo and
+                memo.category_id==category.id %} selected {% endif %}>
+                {{ category.name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <p>제목</p>
+
+        <input type="text" name="title" value="{{ title if title is defined else (memo.title if memo else '') }}">
+
+        <p>내용</p>
+
+        <textarea name="content">{{ content if content is defined else (memo.content if memo else '') }}</textarea>
+
+        <p>
+            <button type="submit">
+                저장
+            </button>
+
+            {% if memo %}
+            <button type="button" onclick="location.href='/memos/{{ memo.id }}'">
+                취소
+            </button>
+            {% else %}
+            <button type="button" onclick="location.href='/memos'">
+                취소
+            </button>
+            {% endif %}
+        </p>
+
+    </form>
+
+</body>
+
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>메모 목록</title>
+</head>
+
+<body>
+
+    <h1>메모 목록</h1>
+    <form action="/memos" method="get">
+        <input type="text" name="keyword" value="{{ keyword or '' }}" placeholder="제목 검색">
+
+        <button type="submit">
+            검색
+        </button>
+
+        <button type="button" onclick="location.href='/memos'">
+            초기화
+        </button>
+    </form>
+
+    <hr>
+
+    <ul>
+        {% for memo in memos %}
+        <li>
+            {{ memo.title }}
+
+            <button type="button" onclick="location.href='/memos/{{ memo.id }}'">
+                상세보기
+            </button>
+        </li>
+        {% else %}
+        <li>등록된 메모가 없습니다.</li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <p>
+        <button onclick="location.href='/'">Home</button>
+        <button onclick="location.href='/memos/new'">메모 등록</button>
+    </p>
+
+    <form action="/logout" method="post">
+        <button type="submit">
+            로그아웃
+        </button>
+    </form>
+
+</body>
+
+</html>
