@@ -4,6 +4,26 @@
 
 ## 기본 보안 및 네트워크 설정
 
+
+### OpenSSH Server 환경 설정
+- openssh-server 설치 → /etc/ssh/sshd_config 생성
+- SSH 서버 설정 = /etc/ssh/sshd_config
+- Port             → SSH 서비스 포트 설정
+- PermitRootLogin  → Root 원격 로그인 허용 여부
+- ListenStream     → systemd ssh.socket의 실제 LISTEN 주소·포트
+
+- OrbStack Ubuntu
+   - sudo passwd whoami
+   - SSH 로그인용 비밀번호 설정
+
+- macOS
+   - ssh -p 20022 ...
+   - Ubuntu 실제 원격 접속 테스트
+
+- root 시스템 최고 관리자 계정
+- 외부에서 root로 직접 SSH 접속하는 경로를 차단하는 보안 설정
+
+
 ### OpenSSH Server 설치
 ```bash
 sudo apt install openssh-server -y
