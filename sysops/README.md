@@ -185,6 +185,12 @@ sudo ls -ld /home/agent-admin/agent-app/upload_files
 sudo ls -ld /home/agent-admin/agent-app/api_keys
 sudo ls -ld /home/agent-admin/agent-app/bin
 sudo ls -ld /var/log/agent-app
+
+getfacl /home/agent-admin/agent-app
+getfacl /home/agent-admin/agent-app/upload_files
+getfacl /home/agent-admin/agent-app/api_keys
+getfacl /home/agent-admin/agent-app/bin
+getfacl /var/log/agent-app
 ```
 
 
@@ -482,6 +488,53 @@ agent-core:x:1001:agent-admin,agent-dev
 ```
 
 
+## 디렉토리 구조 및 권한(ACL 포함) 확인 내역
+```
+getfacl: Removing leading '/' from absolute path names
+# file: home/agent-admin/agent-app
+# owner: agent-admin
+# group: agent-core
+user::rwx
+group::r-x
+other::---
+
+
+getfacl: Removing leading '/' from absolute path names
+# file: home/agent-admin/agent-app/upload_files
+# owner: agent-admin
+# group: agent-common
+user::rwx
+group::rwx
+other::---
+
+
+getfacl: Removing leading '/' from absolute path names
+# file: home/agent-admin/agent-app/api_keys
+# owner: agent-admin
+# group: agent-core
+user::rwx
+group::rwx
+other::---
+
+
+getfacl: Removing leading '/' from absolute path names
+# file: home/agent-admin/agent-app/bin
+# owner: agent-dev
+# group: agent-core
+user::rwx
+group::rwx
+other::---
+
+
+
+getfacl: Removing leading '/' from absolute path names
+# file: var/log/agent-app
+# owner: root
+# group: agent-core
+user::rwx
+group::rwx
+other::---
+```
 
 
 
