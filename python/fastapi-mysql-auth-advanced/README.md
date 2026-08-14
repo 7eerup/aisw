@@ -36,17 +36,35 @@
 
 
 ## 실행
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install "fastapi[standard]" sqlalchemy pymysql passlib bcrypt authlib itsdangerous python-dotenv
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 fastapi dev
+```
+
+개발 서버의 기본 주소는 다음과 같습니다.
+
+```text
+http://127.0.0.1:8000
 ```
 
 
 ## 테스트 계정
 
-- `/signup` 회원가입 → 로그인 → 서비스 사용 가능
+별도로 제공되는 고정 테스트 계정은 없습니다. `/signup`에서 직접 가입한 계정으로 다음 절차를 확인합니다.
+
+```text
+1. /signup에서 사용자 가입
+2. /login에서 생성한 계정으로 로그인
+3. /memos에서 메모 목록 확인
+4. 메모 등록·상세 조회·수정·상태 변경·삭제 확인
+5. 로그아웃 후 /memos 접근 시 /login으로 이동하는지 확인
+```
+
+회원가입이 완료되면 해당 사용자에게 `공부`, `업무`, `개인` 기본 카테고리가 생성됩니다.
 
 
 ## 인증·인가
@@ -77,6 +95,10 @@ fastapi dev
 | `/auth/google`          | GET       | Google OAuth 로그인 시작 |
 | `/auth/google/callback` | GET       | Google OAuth 인증 콜백  |
 | `/logo`                 | GET       | 로고 화면               |
+| `/docs`                 | GET       | Swagger UI           |
+| `/redoc`                | GET       | ReDoc API 문서        |
+| `/openapi.json`         | GET       | OpenAPI Schema       |
+| `/static/*`             | GET       | 정적 파일               |
 
 ### 보호 경로(로그인 사용자)
 
@@ -95,6 +117,10 @@ fastapi dev
 보호 경로에서는 `Depends(get_current_user)`를 사용하여 현재 로그인 사용자를 확인합니다. 로그인하지 않은 사용자가 보호 경로에 접근하면 로그인 화면으로 이동합니다.
 
 메모 상세 조회, 수정, 삭제 및 상태 변경 시에는 `memo_id`와 `current_user.id`를 함께 조회 조건으로 사용합니다. 이를 통해 현재 사용자가 소유한 메모만 처리하고, 다른 사용자의 메모에는 접근할 수 없도록 제한합니다.
+
+`/logout`은 위 표에서 보호 경로로 분류되어 있지만, 현재 Router 함수 자체에는 로그인 의존성이 없습니다. 따라서 비로그인 상태에서도 호출할 수 있으며, 현재 세션을 비운 뒤 홈으로 이동합니다. 로그아웃을 엄격한 보호 경로로 만들려면 `require_login` 의존성과 비로그인 처리 정책을 추가해야 합니다.
+
+FastAPI 기본 API 문서와 `/static/*` 정적 파일은 별도의 인증 검사 없이 제공됩니다. 운영 환경에서 공개하지 않아야 한다면 FastAPI 설정과 배포 계층에서 별도로 제한해야 합니다.
 
 
 
@@ -158,3 +184,4 @@ fastapi dev
 | `authlib` | `auth/oauth_client.py`, `routers/auth_router.py` | GitHub·Google OAuth 인증 요청과 콜백 처리 |
 | `httpx` | OAuth 통신 과정 | GitHub·Google OAuth 서버와 비동기 HTTP 통신 |
 | `python-dotenv` | `database.py`, `main.py`, `auth/oauth_client.py` | `.env` 파일에서 환경 변수 로드 |
+
