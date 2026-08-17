@@ -1,5 +1,6 @@
 # 수행 내역
 
+
 ## 환경 설정(SSH 포트, 방화벽 규칙, 계정/그룹/ACL, 디렉토리/권한, 환경 변수, cron 등록)
 
 ## 기본 보안 및 네트워크 설정
@@ -73,6 +74,7 @@ ListenStream=[::]:20022
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl restart ssh.socket
+sudo systemctl restart ssh.service
 ```
 
 
