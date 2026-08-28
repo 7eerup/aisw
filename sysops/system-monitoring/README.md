@@ -1,6 +1,3 @@
-# 수행 내역
-
-
 ## 환경 설정(SSH 포트, 방화벽 규칙, 계정/그룹/ACL, 디렉토리/권한, 환경 변수, cron 등록)
 
 ## 기본 보안 및 네트워크 설정
@@ -131,6 +128,11 @@ sudo ufw show added
 sudo ufw enable
 ```
 
+#### 리슨 포트 확인
+```bash
+sudo ss -ltnp | grep 20022
+```
+
 #### UFW 상태 및 허용 규칙 확인
 ```bash
 sudo ufw status numbered
@@ -168,14 +170,14 @@ getent passwd agent-dev
 getent passwd agent-test
 ```
 
-### 그룹 추가
+### 역할별 그룹 추가
 ```bash
 sudo usermod -aG agent-common,agent-core agent-admin
 sudo usermod -aG agent-common,agent-core agent-dev
 sudo usermod -aG agent-common agent-test
 ```
 
-### 확인
+### 사용자/그룹 구성 확인
 ```bash
 id agent-admin
 id agent-dev
@@ -210,20 +212,90 @@ sudo chmod 770 /var/log/agent-app
 ```
 
 
+### 부모 경로 탐색 ACL 설정
+- agent-test가 upload_files까지 경로를 통과할 수 있도록
+- 읽기/쓰기 권한은 주지 않고 디렉터리 탐색(x)만 허용
+
+```bash
+sudo setfacl -m g:agent-common:--x /home/agent-admin
+sudo setfacl -m g:agent-common:--x /home/agent-admin/agent-app
+```
+
+### upload_files ACL
+- agent-common(admin/dev/test) 그룹에 R/W 및 디렉터리 접근 권한 부여
+
+```bash
+sudo setfacl -m g:agent-common:rwx /home/agent-admin/agent-app/upload_files
+sudo setfacl -m m::rwx /home/agent-admin/agent-app/upload_files
+sudo setfacl -m o::--- /home/agent-admin/agent-app/upload_files
+```
+
+# 새로 생성되는 파일/디렉터리에도 agent-common 권한이 상속되도록 Default ACL 설정
+
+```bash
+sudo setfacl -m d:g:agent-common:rwx /home/agent-admin/agent-app/upload_files
+sudo setfacl -m d:m::rwx /home/agent-admin/agent-app/upload_files
+sudo setfacl -m d:o::--- /home/agent-admin/agent-app/upload_files
+```
+
+### api_keys ACL
+- agent-core(admin/dev)만 접근 가능
+
+```bash
+sudo setfacl -m g:agent-core:rwx /home/agent-admin/agent-app/api_keys
+sudo setfacl -m m::rwx /home/agent-admin/agent-app/api_keys
+sudo setfacl -m o::--- /home/agent-admin/agent-app/api_keys
+
+sudo setfacl -m d:g:agent-core:rwx /home/agent-admin/agent-app/api_keys
+sudo setfacl -m d:m::rwx /home/agent-admin/agent-app/api_keys
+sudo setfacl -m d:o::--- /home/agent-admin/agent-app/api_keys
+```
+
+### bin ACL
+- monitor.sh를 실행해야 하는 agent-core(admin/dev) 기준
+
+```bash
+sudo chown agent-dev:agent-core /home/agent-admin/agent-app/bin
+sudo chmod 770 /home/agent-admin/agent-app/bin
+
+sudo setfacl -m g:agent-core:rwx /home/agent-admin/agent-app/bin
+sudo setfacl -m m::rwx /home/agent-admin/agent-app/bin
+sudo setfacl -m o::--- /home/agent-admin/agent-app/bin
+```
+
+### 로그 디렉터리 ACL
+- agent-core(admin/dev)만 R/W 가능
+```bash
+sudo setfacl -m g:agent-core:rwx /var/log/agent-app
+sudo setfacl -m m::rwx /var/log/agent-app
+sudo setfacl -m o::--- /var/log/agent-app
+
+sudo setfacl -m d:g:agent-core:rwx /var/log/agent-app
+sudo setfacl -m d:m::rwx /var/log/agent-app
+sudo setfacl -m d:o::--- /var/log/agent-app
+```
+
 ### 디렉터리 소유자·그룹·권한 확인
 ```bash
+sudo ls -ld /home/agent-admin
 sudo ls -ld /home/agent-admin/agent-app
 sudo ls -ld /home/agent-admin/agent-app/upload_files
 sudo ls -ld /home/agent-admin/agent-app/api_keys
 sudo ls -ld /home/agent-admin/agent-app/bin
 sudo ls -ld /var/log/agent-app
-
-getfacl /home/agent-admin/agent-app
-getfacl /home/agent-admin/agent-app/upload_files
-getfacl /home/agent-admin/agent-app/api_keys
-getfacl /home/agent-admin/agent-app/bin
-getfacl /var/log/agent-app
 ```
+
+
+### ACL 확인
+```bash
+sudo getfacl /home/agent-admin
+sudo getfacl /home/agent-admin/agent-app
+sudo getfacl /home/agent-admin/agent-app/upload_files
+sudo getfacl /home/agent-admin/agent-app/api_keys
+sudo getfacl /home/agent-admin/agent-app/bin
+sudo getfacl /var/log/agent-app
+```
+
 
 
 ## 애플리케이션 실행 환경 구성
@@ -236,19 +308,17 @@ sudo mkdir -p /home/agent-admin/agent-app
 sudo cp agent-app-linux-x86 /home/agent-admin/agent-app/
 sudo chown agent-admin:agent-core /home/agent-admin/agent-app/agent-app-linux-x86
 sudo chmod 750 /home/agent-admin/agent-app/agent-app-linux-x86
-sudo ls -lh /home/agent-admin/agent-app
+sudo ls -l /home/agent-admin/agent-app/agent-app-linux-x86
 ```
 
 
 ### 환경 변수 등록
 ```bash
-sudo -u agent-admin bash -c 'cat >> /home/agent-admin/.bashrc <<EOF
-export AGENT_HOME=/home/agent-admin/agent-app
-export AGENT_PORT=15034
-export AGENT_UPLOAD_DIR=\$AGENT_HOME/upload_files
-export AGENT_KEY_PATH=\$AGENT_HOME/api_keys
-export AGENT_LOG_DIR=/var/log/agent-app
-EOF'
+sudo -u agent-admin sh -c 'echo "export AGENT_HOME=/home/agent-admin/agent-app" >> /home/agent-admin/.bashrc'
+sudo -u agent-admin sh -c 'echo "export AGENT_PORT=15034" >> /home/agent-admin/.bashrc'
+sudo -u agent-admin sh -c 'echo "export AGENT_UPLOAD_DIR=/home/agent-admin/agent-app/upload_files" >> /home/agent-admin/.bashrc'
+sudo -u agent-admin sh -c 'echo "export AGENT_KEY_PATH=/home/agent-admin/agent-app/api_keys" >> /home/agent-admin/.bashrc'
+sudo -u agent-admin sh -c 'echo "export AGENT_LOG_DIR=/var/log/agent-app" >> /home/agent-admin/.bashrc'
 ```
 
 ### 환경 변수 설정 확인
@@ -256,48 +326,33 @@ EOF'
 sudo tail -n 5 /home/agent-admin/.bashrc
 ```
 
-### 환경 변수 적용 확인
-```
-sudo -iu agent-admin
+### 키 파일 설정
 
-echo $AGENT_HOME
-echo $AGENT_PORT
-echo $AGENT_UPLOAD_DIR
-echo $AGENT_KEY_PATH
-echo $AGENT_LOG_DIR
-```
-
-
-### secret.key 설정 및 확인
 ```bash
 sudo touch /home/agent-admin/agent-app/api_keys/secret.key
 sudo chown agent-admin:agent-core /home/agent-admin/agent-app/api_keys/secret.key
 sudo chmod 660 /home/agent-admin/agent-app/api_keys/secret.key
-
-sudo ls -l /home/agent-admin/agent-app/api_keys
-```
-
-
-### 키 파일 설정
-
-```bash
 echo "agent_api_key_test" | sudo tee /home/agent-admin/agent-app/api_keys/secret.key > /dev/null
-sudo cat /home/agent-admin/agent-app/api_keys/secret.key
-
-sudo ls -l /home/agent-admin/agent-app/api_keys
 ```
 
-### 로그 디렉터리 소유 그룹 및 권한 설정
-```bash
-sudo chown root:agent-core /var/log/agent-app
-sudo chmod 770 /var/log/agent-app
 
-ls -ld /var/log/agent-app
+### 키 파일 검증
+```bash
+sudo cat /home/agent-admin/agent-app/api_keys/secret.key
+sudo ls -l /home/agent-admin/agent-app/api_keys/secret.key
+```
+
+
+### 로그 디렉터리 권한 확인
+```bash
+sudo ls -ld /var/log/agent-app
+sudo getfacl /var/log/agent-app
 ```
 
 ### 로그인 및 환경 변수 적용 확인
 ```bash
 sudo -iu agent-admin
+whoami
 
 echo $AGENT_HOME
 echo $AGENT_PORT
@@ -350,14 +405,18 @@ LISTEN 0      1            0.0.0.0:15034      0.0.0.0:*    users:(("agent-app-li
 
 ## 시스템 관제 자동화 스크립트 monitor.sh 구현
 
-### monitor.sh 생성 및 작성
+### monitor.sh 파일 생성 및 편집
 ```bash
 sudo -u agent-dev nano /home/agent-admin/agent-app/bin/monitor.sh
 ```
 
-### monitor.sh 소유자·그룹 및 권한 설정
+### monitor.sh 소유자를 agent-dev, 그룹을 agent-core로 설정
 ```bash
 sudo chown agent-dev:agent-core /home/agent-admin/agent-app/bin/monitor.sh
+```
+
+### monitor.sh 권한을 750(rwxr-x---)으로 설정
+```bash
 sudo chmod 750 /home/agent-admin/agent-app/bin/monitor.sh
 ```
 
@@ -366,34 +425,55 @@ sudo chmod 750 /home/agent-admin/agent-app/bin/monitor.sh
 sudo ls -l /home/agent-admin/agent-app/bin/monitor.sh
 ```
 
-### monitor.sh 디렉터리 접근 권한 확인
+### agent-dev 계정이 bin 디렉터리에 접근 가능한지 확인
 ```bash
-sudo -u agent-dev ls -ld /home/agent-admin/agent-app
 sudo -u agent-dev ls -ld /home/agent-admin/agent-app/bin
 ```
 
-### monitor.sh Bash 문법 검사
+### agent-dev 계정이 monitor.sh 파일을 실제로 읽을 수 있는지 확인
 ```bash
-sudo -u agent-dev bash -n \
-/home/agent-admin/agent-app/bin/monitor.sh
+sudo -u agent-dev head -n 5 /home/agent-admin/agent-app/bin/monitor.sh
 ```
 
-### monitor.sh 실행 및 종료 상태 확인(Health Check)
+### monitor.sh Bash 문법 오류 검사 (문법 오류가 없으면 "Syntax OK" 출력)
+```bash
+sudo -u agent-dev bash -n /home/agent-admin/agent-app/bin/monitor.sh && echo "Syntax OK"
+```
+
+### agent-app-linux-x86 프로세스가 실행 중인지 확인
+
+```bash
+pgrep -af agent-app-linux-x86
+```
+
+
+### 애플리케이션이 TCP 15034 포트에서 LISTEN 중인지 확인
+```bash
+sudo ss -ltnp | grep ':15034'
+```
+
+### agent-admin 계정으로 monitor.sh 실행
+- 프로세스·포트·방화벽·CPU·MEM·DISK 상태 확인 및 로그 기록
+
 ```bash
 sudo -u agent-admin /home/agent-admin/agent-app/bin/monitor.sh
-echo "exit status=$?"
 ```
 
-### monitor.log 누적 기록 확인
+### 직전에 실행한 monitor.sh 종료 상태 확인  정상 상태이면 exit status=0, 비정상 상태이면 exit status=1
+echo "exit status=$?"
+
+
+### monitor.log 최근 5개 로그 확인
+### 로그가 지정된 형식으로 누적되는지 검증
 ```bash
-sudo ls -l /var/log/agent-app/monitor.log
 sudo tail -n 5 /var/log/agent-app/monitor.log
 ```
 
-### 비정상 상태 exit 1 (애플리케이션 실행 터미널에서 앱 종료 실행)
+### monitor.sh 내 로그 용량 관리 관련 코드 확인
+### 10MB 제한, 최대 로그 파일 수, 파일 크기 확인, 회전·삭제 로직 검증
+
 ```bash
-sudo -u agent-admin /home/agent-admin/agent-app/bin/monitor.sh
-echo "exit status=$?"
+sudo grep -nE 'MAX_SIZE|MAX_FILES|LOG_SIZE|stat -c%s|seq|mv|rm -f' /home/agent-admin/agent-app/bin/monitor.sh
 ```
 
 ### 결과
@@ -405,18 +485,6 @@ Checking process 'agent-app-linux-x86'... [FAIL]
 exit status=1
 ```
 
-### 포트와 자원·방화벽 정상 출력 확인
-```bash
-sudo -u agent-admin /home/agent-admin/agent-app/bin/monitor.sh
-```
-
-
-### 로그 용량 관리 코드 확인
-```bash
-sudo grep -nE \
-'MAX_SIZE|MAX_FILES|LOG_SIZE|stat -c%s|seq|mv|rm -f' \
-/home/agent-admin/agent-app/bin/monitor.sh
-```
 
 
 ## cron 매분 자동 실행 등록
@@ -471,9 +539,6 @@ sudo crontab -u agent-admin -l
 sudo wc -l /var/log/agent-app/monitor.log
 sudo tail -n 5 /var/log/agent-app/monitor.log
 ```
-
-
-
 
 
 
