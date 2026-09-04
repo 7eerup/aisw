@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <rect width="1200" height="760" fill="#ffffff"/>
+  <style>
+    text { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",Arial,sans-serif; fill:#111827; }
+    .title{font-size:46px;font-weight:800}.sub{font-size:24px;fill:#4b5563}.h{font-size:30px;font-weight:800;fill:white}
+    .step{font-size:24px;font-weight:700}.small{font-size:21px}.note{font-size:24px;font-weight:700}
+  </style>
+  <text x="600" y="62" text-anchor="middle" class="title">Deadlock Before / After</text>
+  <text x="600" y="98" text-anchor="middle" class="sub">MULTI_THREAD_ENABLE 변경에 따른 순환 대기 발생 여부</text>
+
+  <rect x="45" y="130" width="530" height="500" rx="18" fill="#fff7f7" stroke="#dc2626" stroke-width="3"/>
+  <rect x="45" y="130" width="530" height="62" rx="18" fill="#dc2626"/>
+  <rect x="45" y="174" width="530" height="18" fill="#dc2626"/>
+  <text x="310" y="172" text-anchor="middle" class="h">Before</text>
+  <text x="85" y="232" class="step">MULTI_THREAD_ENABLE = True</text>
+  <text x="85" y="276" class="small">Thread-1: Shared_Memory_A 보유</text>
+  <text x="85" y="310" class="small">→ Socket_Pool_B 대기</text>
+  <text x="85" y="354" class="small">Thread-2: Socket_Pool_B 보유</text>
+  <text x="85" y="388" class="small">→ Shared_Memory_A 대기</text>
+  <text x="85" y="445" class="step" fill="#b91c1c">WAITING / BLOCKED</text>
+  <text x="85" y="485" class="step" fill="#b91c1c">PID는 유지, 작업은 멈춤</text>
+
+  <circle cx="425" cy="330" r="62" fill="#fee2e2" stroke="#ef4444" stroke-width="3"/>
+  <circle cx="425" cy="500" r="62" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+  <text x="425" y="324" text-anchor="middle" class="small">Thread-1</text>
+  <text x="425" y="350" text-anchor="middle" class="small">holds A</text>
+  <text x="425" y="494" text-anchor="middle" class="small">Thread-2</text>
+  <text x="425" y="520" text-anchor="middle" class="small">holds B</text>
+  <path d="M480 350 C545 390 545 440 480 475" fill="none" stroke="#dc2626" stroke-width="7"/>
+  <polygon points="474,468 494,474 479,489" fill="#dc2626"/>
+  <path d="M370 475 C305 440 305 390 370 350" fill="none" stroke="#2563eb" stroke-width="7"/>
+  <polygon points="376,357 356,351 371,336" fill="#2563eb"/>
+  <text x="310" y="595" text-anchor="middle" class="note" fill="#b91c1c">Circular Wait → Deadlock</text>
+
+  <rect x="625" y="130" width="530" height="500" rx="18" fill="#f4fff8" stroke="#059669" stroke-width="3"/>
+  <rect x="625" y="130" width="530" height="62" rx="18" fill="#059669"/>
+  <rect x="625" y="174" width="530" height="18" fill="#059669"/>
+  <text x="890" y="172" text-anchor="middle" class="h">After</text>
+  <text x="665" y="232" class="step">MULTI_THREAD_ENABLE = False</text>
+  <text x="665" y="286" class="step">1. Scheduler 시작</text>
+  <text x="665" y="336" class="step">2. Thread-A/B/C 작업 진행</text>
+  <text x="665" y="386" class="step">3. WAITING / BLOCKED 없음</text>
+  <text x="665" y="436" class="step">4. 각 Task 100% 완료</text>
+  <text x="665" y="486" class="step">5. All tasks completed</text>
+  <rect x="940" y="280" width="150" height="35" rx="10" fill="#d1fae5" stroke="#10b981"/>
+  <rect x="940" y="350" width="150" height="35" rx="10" fill="#d1fae5" stroke="#10b981"/>
+  <rect x="940" y="420" width="150" height="35" rx="10" fill="#d1fae5" stroke="#10b981"/>
+  <rect x="940" y="280" width="150" height="35" rx="10" fill="#10b981"/>
+  <rect x="940" y="350" width="150" height="35" rx="10" fill="#10b981"/>
+  <rect x="940" y="420" width="150" height="35" rx="10" fill="#10b981"/>
+  <text x="1015" y="305" text-anchor="middle" class="small" fill="white">Thread-A 100%</text>
+  <text x="1015" y="375" text-anchor="middle" class="small" fill="white">Thread-B 100%</text>
+  <text x="1015" y="445" text-anchor="middle" class="small" fill="white">Thread-C 100%</text>
+  <text x="890" y="595" text-anchor="middle" class="note" fill="#047857">상호 대기 제거 → 정상 완료</text>
+
+  <rect x="115" y="665" width="970" height="60" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="600" y="704" text-anchor="middle" class="note">결론: True에서는 서로 Lock을 기다려 멈추지만, False에서는 순환 대기가 사라져 작업이 완료됨</text>
+</svg>
