@@ -88,3 +88,153 @@ mini-redis/
   * TTL 만료 순서 관리
   * `(expire_at, key)` 형태의 데이터 저장
   * 가장 빠른 만료 시간 확인
+
+
+
+  ## 테스트
+
+### String 타입 기본 동작 테스트
+
+```text
+mini-redis> SET name Alice
+OK
+
+mini-redis> GET name
+"Alice"
+
+mini-redis> EXISTS name
+(integer) 1
+
+mini-redis> DBSIZE
+(integer) 1
+
+mini-redis> KEYS
+1) "name"
+
+mini-redis> DEL name
+(integer) 1
+
+mini-redis> GET name
+(nil)
+
+mini-redis> EXISTS name
+(integer) 0
+
+mini-redis> DBSIZE
+(integer) 0
+
+mini-redis> KEYS
+(empty array)
+```
+
+### LRU 자동 제거 테스트
+
+```text
+mini-redis> CONFIG SET maxmemory 10
+OK
+
+mini-redis> SET a 1111
+OK
+
+mini-redis> SET b 2222
+OK
+
+mini-redis> GET a
+"1111"
+
+mini-redis> SET c 3333
+OK
+
+# 결과
+
+mini-redis> GET a
+"1111"
+
+mini-redis> GET b
+(nil)
+
+mini-redis> GET c
+"3333"
+
+mini-redis> DBSIZE
+(integer) 2
+```
+
+key 1바이트 + value 4바이트 = 데이터당 5바이트
+
+```text
+SET a 1111 → used_memory 5 bytes
+SET b 2222 → used_memory 10 bytes
+GET a      → a를 최근 사용 데이터로 갱신
+SET c 3333 → 메모리 제한 초과
+```
+
+LRU 정책에 따라 가장 오래 사용하지 않은 `b` 삭제
+
+```text
+a(유지) / b(삭제) / c(유지)
+```
+
+### INFO memory 테스트
+
+`evicted_keys`는 메모리 제한 때문에 LRU 정책으로 자동 제거된 키의 누적 개수
+
+```text
+mini-redis> INFO memory
+used_memory:10
+maxmemory:10
+evicted_keys:1
+```
+
+### EXPIRE / TTL 테스트
+
+```text
+mini-redis> SET temp hello
+OK
+
+mini-redis> EXPIRE temp 10
+(integer) 1
+
+mini-redis> TTL temp
+(integer) 5
+
+mini-redis> GET temp
+"hello"
+
+mini-redis> TTL temp
+(integer) -2
+
+mini-redis> GET temp
+(nil)
+```
+
+TTL 값은 명령 실행 시점에 따라 달라질 수 있으며, 만료된 키는 삭제되고 TTL 조회 시 `-2`를 반환
+
+### 에러 처리 테스트
+
+```text
+mini-redis> HELLO
+(error) ERR unknown command 'HELLO'
+
+mini-redis> GET
+(error) ERR wrong number of arguments for 'GET' command
+
+mini-redis> SET key
+(error) ERR wrong number of arguments for 'SET' command
+
+mini-redis> EXPIRE key abc
+(error) ERR value is not an integer or out of range
+
+mini-redis> CONFIG SET maxmemory abc
+(error) ERR value is not an integer or out of range
+```
+
+### Out Of Memory
+
+```text
+mini-redis> CONFIG SET maxmemory 3
+OK
+
+mini-redis> SET a 1111
+(error) OOM command not allowed when used_memory > 'maxmemory'
+```
