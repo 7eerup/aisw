@@ -1,3 +1,43 @@
+# 실제 리포지토리 적용 및 PR 완성
+
+AI 기반 Git 커밋 및 PR 생성기를 이전 미션인 Mini Redis 프로젝트에 적용
+
+## 적용 결과
+
+* 적용 프로젝트: `mini-redis`
+* 작업 브랜치: `docs/improve-usage-guide`
+* 변경 내용: Mini Redis 실행 환경, 실행 방법, 종료 방법 및 빠른 검증 명령 추가
+* 커밋: `4504b0b docs(docs): Mini Redis 실행 및 환경 안내 추가`
+* PR: [#4 docs(docs): Mini Redis 실행 및 환경 안내 추가](https://github.com/7eerup/aisw/pull/4)
+* 병합 상태: Main 브랜치 병합 완료
+
+## AI 생성 결과
+
+AI가 생성한 커밋 메시지 초안은 다음과 같습니다.
+
+```text
+docs(cli): 실행 방법과 환경 안내 추가
+
+- README.md에 Python 3.10 이상 실행 환경과 외부 패키지 불필요 사항을 정리함
+- mini-redis 실행 예시, 종료 방법, 표준 입력 기반 빠른 확인 절차를 README.md에 추가함
+```
+
+AI가 생성한 PR 제목은 다음과 같습니다.
+
+```text
+docs(readme): 실행 방법과 환경 안내 추가
+```
+
+## AI 초안에서 최종 PR로 변경한 내용
+
+1. AI 커밋 제목의 `docs(cli)`를 문서 변경에 더 적합한 `docs(docs)`로 수정했습니다.
+2. AI PR 제목의 `readme`는 팀 컨벤션에서 허용한 scope가 아니므로 `docs`로 교정했습니다.
+3. 제목에 `Mini Redis`를 추가해 변경 대상을 명확하게 표현했습니다.
+4. 변경 파일을 일반적인 `README.md` 대신 `mini-redis/README.md`로 구체화했습니다.
+5. 실제 검증에 사용한 표준 입력 실행 명령을 `How to Test`에 반영했습니다.
+6. 예상 출력 결과를 추가해 검토자가 정상 동작 여부를 확인할 수 있도록 보완했습니다.
+
+
 # 커밋 및 PR 템플릿 커스터마이징
 
 기존 커밋 스타일을 분석하고 팀 컨벤션을 정의한 뒤, CLI 옵션으로 기본 컨벤션과 팀 컨벤션을 선택할 수 있도록 구현했습니다.
