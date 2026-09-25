@@ -1,5 +1,42 @@
 # Mini Redis
 
+## 실행 환경
+
+- Python 3.10 이상
+- 별도의 외부 패키지 설치 없음
+
+## 실행 방법
+
+프로젝트 디렉터리로 이동한 후 프로그램을 실행합니다.
+
+```bash
+cd mini-redis
+python main.py
+```
+
+프로그램이 실행되면 `mini-redis>` 프롬프트에 명령을 입력합니다.
+
+```text
+mini-redis> SET name Alice
+OK
+mini-redis> GET name
+"Alice"
+mini-redis> DBSIZE
+(integer) 1
+```
+
+`exit` 또는 `quit` 명령으로 프로그램을 종료할 수 있습니다.
+
+## 빠른 실행 확인
+
+표준 입력을 사용하여 기본 저장 및 조회 기능을 한 번에 확인할 수 있습니다.
+
+```bash
+printf 'SET name Alice\nGET name\nDBSIZE\nquit\n' \
+  | python main.py
+```
+
+
 ## Data Structure and Algorithm
 
 * 자료구조 = 데이터를 저장하고 관리하는 방법
