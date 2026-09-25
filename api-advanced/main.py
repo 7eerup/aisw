@@ -50,11 +50,15 @@ def main() -> None:
 
     if arguments.safe_mode:
         status = mask_sensitive_data(status)
-        diff = sanitize_diff(diff)
+        diff = sanitize_diff(
+            diff,
+            max_lines=arguments.max_diff_lines,
+        )
 
         print(
             "[INFO] safe-mode 적용: "
-            "민감정보 마스킹 및 diff 200줄 제한"
+            "민감정보 마스킹 및 "
+            f"diff {arguments.max_diff_lines}줄 제한"
         )
 
     try:

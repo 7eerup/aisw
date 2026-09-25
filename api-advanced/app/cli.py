@@ -2,6 +2,7 @@
 
 import argparse
 
+from app.sanitizer import MAX_DIFF_LINES
 
 DEFAULT_MODEL = "gpt-5.4-mini"
 DEFAULT_TEMPERATURE = 0.2
@@ -32,6 +33,18 @@ def parse_max_tokens(value: str) -> int:
     return max_tokens
 
 
+def parse_max_diff_lines(value: str) -> int:
+    """diff 최대 줄 수를 검증하고 정수로 반환한다."""
+    max_diff_lines = int(value)
+
+    if max_diff_lines <= 0:
+        raise argparse.ArgumentTypeError(
+            "max-diff-lines는 1 이상의 정수여야 합니다."
+        )
+
+    return max_diff_lines
+
+
 def add_common_options(parser: argparse.ArgumentParser) -> None:
     """commit과 pr 명령에서 사용할 공통 옵션을 추가한다."""
     parser.add_argument(
@@ -55,6 +68,15 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
         "--safe-mode",
         action="store_true",
         help="민감정보 제거 및 diff 전송 범위 제한",
+    )
+    parser.add_argument(
+        "--max-diff-lines",
+        type=parse_max_diff_lines,
+        default=MAX_DIFF_LINES,
+        help=(
+            "safe-mode에서 전송할 diff 최대 줄 수 "
+            f"(기본값: {MAX_DIFF_LINES})"
+        ),
     )
 
 
