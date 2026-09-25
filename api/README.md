@@ -22,6 +22,7 @@ Git 변경 사항을 분석해 AI 기반 커밋 메시지와 Pull Request 초안
 * Git
 * OpenAI 호환 Chat Completions API
 
+
 ## 프로젝트 구조
 
 ```text
@@ -35,16 +36,6 @@ api/
 │   ├── prompt_builder.py
 │   ├── sanitizer.py
 │   └── validator.py
-├── tests/
-│   ├── __init__.py
-│   ├── test_ai_client.py
-│   ├── test_cli.py
-│   ├── test_config.py
-│   ├── test_git_service.py
-│   ├── test_main.py
-│   ├── test_prompt_builder.py
-│   ├── test_sanitizer.py
-│   └── test_validator.py
 ├── main.py
 ├── README.md
 └── requirements.txt
@@ -184,40 +175,17 @@ feat: AI 기반 Git 커밋 및 PR 초안 생성기 추가
 - safe-mode와 출력 형식 검증 기능을 추가했습니다.
 
 ## How to Test
-- `python -m pytest -v`로 전체 테스트를 실행합니다.
 - `python main.py commit --safe-mode`를 실행합니다.
 - `python main.py pr --safe-mode`를 실행합니다.
+- 생성 결과가 커밋 및 PR 형식 규칙을 만족하는지 확인합니다.
 ----------------------
 ```
 
 AI가 생성하는 실제 문구는 입력된 Git 변경 사항과 모델에 따라 달라질 수 있습니다.
 
-## 테스트
-
-전체 단위 테스트를 실행합니다.
-
-```bash
-python -m pytest -v
-```
-
-Git 서비스 테스트만 실행하려면 다음 명령을 사용합니다.
-
-```bash
-python -m pytest tests/test_git_service.py -v
-```
-
-PEP 8 검사를 실행합니다.
-
-```bash
-pycodestyle main.py app tests
-```
-
-`pycodestyle` 실행 결과가 출력되지 않으면 검사를 통과한 것입니다.
-
 ## 안전 및 주의사항
 
 * API Key를 소스 코드나 README에 직접 작성하지 않습니다.
-* `.env`, 가상환경, `__pycache__`, `.pytest_cache`는 Git에 포함하지 않습니다.
 * safe-mode는 이메일과 API Key 형태의 민감정보를 마스킹합니다.
 * safe-mode는 API로 전달하는 diff를 최대 200줄로 제한합니다.
 * 민감한 파일이 포함된 경우 API 요청 전에 diff를 직접 확인합니다.
