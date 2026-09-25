@@ -1,3 +1,107 @@
+# 커밋 및 PR 템플릿 커스터마이징
+
+기존 커밋 스타일을 분석하고 팀 컨벤션을 정의한 뒤, CLI 옵션으로 기본 컨벤션과 팀 컨벤션을 선택할 수 있도록 구현했습니다.
+
+## 기존 스타일 분석
+
+기존 커밋에서는 `feat`, `fix`, `docs`, `refactor`, `chore` 등의 prefix를 사용했지만, 변경 범위를 나타내는 scope는 일관되게 사용하지 않았습니다.
+
+변경 모듈을 제목에서 바로 확인할 수 있도록 팀 컨벤션에서는 `type(scope)` 형식을 사용합니다.
+
+## 팀 컨벤션
+
+### 제목 형식
+
+```text
+type(scope): 한국어 요약
+```
+
+### 허용 type
+
+| type       | 용도                |
+| ---------- | ----------------- |
+| `feat`     | 새로운 기능 추가         |
+| `fix`      | 오류 수정             |
+| `docs`     | 문서 변경             |
+| `refactor` | 기능 변화 없는 코드 구조 개선 |
+| `chore`    | 설정 및 기타 작업        |
+
+### 허용 scope
+
+| scope    | 대상                |
+| -------- | ----------------- |
+| `cli`    | CLI 명령과 옵션        |
+| `api`    | AI API 연동         |
+| `git`    | Git 명령 및 변경 사항 수집 |
+| `prompt` | 프롬프트 생성           |
+| `safe`   | 민감정보 및 diff 제한    |
+| `docs`   | README와 문서        |
+
+### 커밋 본문
+
+* 제목 다음에 빈 줄을 추가합니다.
+* 핵심 변경 사항을 1~2개 불릿으로 작성합니다.
+* 변경된 파일이나 모듈을 1~3개 언급합니다.
+
+### PR 형식
+
+* PR 제목에도 `type(scope): 한국어 요약` 형식을 적용합니다.
+* `## Why`, `## What`, `## How to Test` 구조를 유지합니다.
+* `## What`에는 변경된 파일이나 모듈을 언급합니다.
+* `## How to Test`에는 실제 실행 가능한 명령을 작성합니다.
+
+## 사용 방법
+
+기본 컨벤션:
+
+```bash
+python main.py commit \
+  --safe-mode \
+  --max-diff-lines 50 \
+  --convention default
+```
+
+팀 컨벤션:
+
+```bash
+python main.py commit \
+  --safe-mode \
+  --max-diff-lines 50 \
+  --convention team
+```
+
+PR 초안에도 같은 옵션을 사용할 수 있습니다.
+
+```bash
+python main.py pr \
+  --safe-mode \
+  --max-diff-lines 50 \
+  --convention team
+```
+
+## 적용 전후 비교
+
+### 기본 컨벤션
+
+```text
+feat: 커밋 컨벤션 선택 옵션 추가
+
+- app/cli.py에 --convention 옵션과 기본 컨벤션 값을 추가해 출력 형식을 선택할 수 있게 했습니다.
+- app/prompt_builder.py와 main.py에서 선택된 컨벤션에 따라 커밋 메시지 프롬프트를 구성하도록 반영했습니다.
+```
+
+### 팀 컨벤션
+
+```text
+feat(cli): 커밋 컨벤션 선택 옵션 추가
+
+- CLI에 --convention 옵션을 추가해 커밋/PR 컨벤션을 선택할 수 있도록 했습니다.
+- prompt_builder와 main에서 선택된 컨벤션에 따라 프롬프트를 구성하도록 반영했습니다.
+```
+
+팀 컨벤션을 적용하면 커밋 제목에 `cli` scope가 추가되어 변경 범위를 제목에서 바로 확인할 수 있습니다.
+
+
 # Safe-mode 고도화
 
 safe-mode에서 AI API로 전송할 Git diff의 최대 줄 수를 사용자가 직접 설정할 수 있도록 기능을 확장했습니다.

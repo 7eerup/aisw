@@ -75,9 +75,11 @@ def main() -> None:
         arguments.command,
         status,
         diff,
+        convention=arguments.convention,
     )
 
     print(f"[INFO] 실행 명령: {arguments.command}")
+    print(f"[INFO] 컨벤션: {arguments.convention}")
     print(f"[INFO] AI 모델: {arguments.model}")
     print(f"[INFO] AI API Base URL: {base_url}")
     print("[INFO] AI API 요청 중...")

@@ -7,6 +7,11 @@ from app.sanitizer import MAX_DIFF_LINES
 DEFAULT_MODEL = "gpt-5.4-mini"
 DEFAULT_TEMPERATURE = 0.2
 DEFAULT_MAX_TOKENS = 500
+DEFAULT_CONVENTION = "default"
+CONVENTION_CHOICES = (
+    "default",
+    "team",
+)
 
 
 def parse_temperature(value: str) -> float:
@@ -76,6 +81,15 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
         help=(
             "safe-mode에서 전송할 diff 최대 줄 수 "
             f"(기본값: {MAX_DIFF_LINES})"
+        ),
+    )
+    parser.add_argument(
+        "--convention",
+        choices=CONVENTION_CHOICES,
+        default=DEFAULT_CONVENTION,
+        help=(
+            "커밋/PR 컨벤션 선택 "
+            f"(기본값: {DEFAULT_CONVENTION})"
         ),
     )
 
