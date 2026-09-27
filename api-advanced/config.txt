@@ -1,0 +1,5 @@
+EMAIL=user@example.com
+API_KEY=sk-example123456789
+SERVICE_NAME=sample-app
+ENVIRONMENT=development
+DEBUG=false
