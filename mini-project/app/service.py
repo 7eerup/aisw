@@ -1,4 +1,5 @@
 from typing import Iterator
+from itertools import islice
 
 from .models import Transaction
 from .repository import TransactionRepository, CategoryRepository
@@ -121,3 +122,15 @@ class BudgetService:
                 continue
 
             yield transaction
+
+    def paginate_transactions(
+        self,
+        transactions: Iterator[Transaction],
+        page: int,
+        page_size: int,
+    ) -> Iterator[Transaction]:
+        """거래 내역을 페이지 단위로 반환한다."""
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        yield from islice(transactions, start, end)

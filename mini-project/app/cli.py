@@ -75,9 +75,12 @@ def handle_list(
     date_to: str | None = None,
     min_amount: int | None = None,
     max_amount: int | None = None,
+    page: int = 1,
+    page_size: int = 10,
 ) -> None:
     """저장된 거래 내역을 출력한다."""
 
+    # 날짜 검증
     if date_from is not None and not is_valid_date(date_from):
         raise ValueError("--from 날짜 형식이 올바르지 않습니다.")
 
@@ -91,6 +94,7 @@ def handle_list(
     ):
         raise ValueError("--from 날짜는 --to 날짜보다 늦을 수 없습니다.")
 
+    # 금액 검증
     if min_amount is not None and min_amount < 0:
         raise ValueError("--min 금액은 0 이상이어야 합니다.")
 
@@ -103,10 +107,16 @@ def handle_list(
         and min_amount > max_amount
     ):
         raise ValueError("--min 금액은 --max 금액보다 클 수 없습니다.")
-    
-    found = False
 
-    for transaction in service.list_transactions(
+    # 페이지 검증
+    if page < 1:
+        raise ValueError("--page는 1 이상이어야 합니다.")
+
+    if page_size < 1:
+        raise ValueError("--page-size는 1 이상이어야 합니다.")
+
+    # 필터링
+    transactions = service.list_transactions(
         transaction_type,
         category,
         tag,
@@ -114,7 +124,19 @@ def handle_list(
         date_to,
         min_amount,
         max_amount,
-    ):
+    )
+
+    # 페이지네이션
+    transactions = service.paginate_transactions(
+        transactions,
+        page,
+        page_size,
+    )
+
+    # 출력
+    found = False
+
+    for transaction in transactions:
         found = True
 
         print(
@@ -192,6 +214,20 @@ def main() -> None:
         help="최대 금액",
     )
 
+    list_parser.add_argument(
+        "--page",
+        type=int,
+        default=1,
+        help="페이지 번호 (기본값: 1)",
+    )
+
+    list_parser.add_argument(
+        "--page-size",
+        type=int,
+        default=10,
+        help="페이지당 거래 수 (기본값: 10)",
+    )
+
     args = parser.parse_args()
 
     transaction_repository = TransactionRepository(DATA_DIR / "transactions.jsonl")
@@ -215,4 +251,6 @@ def main() -> None:
             date_to=args.date_to,
             min_amount=args.min_amount,
             max_amount=args.max_amount,
+            page=args.page,
+            page_size=args.page_size,
         )
