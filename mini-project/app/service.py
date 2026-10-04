@@ -1,3 +1,5 @@
+from typing import Iterator
+
 from .models import Transaction
 from .repository import TransactionRepository, CategoryRepository
 from .validators import is_valid_date, is_valid_type, is_valid_amount
@@ -63,3 +65,59 @@ class BudgetService:
         self.transaction_repository.add(transaction)
 
         return transaction
+
+    def list_transactions(
+        self,
+        transaction_type: str | None = None,
+        category: str | None = None,
+        tag: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        min_amount: int | None = None,
+        max_amount: int | None = None,
+    ) -> Iterator[Transaction]:
+        """조건에 맞는 거래 내역을 한 건씩 반환한다."""
+        for transaction in self.transaction_repository.get_all():
+            if (
+                transaction_type is not None
+                and transaction.type != transaction_type
+            ):
+                continue
+
+            if (
+                category is not None
+                and transaction.category != category
+            ):
+                continue
+
+            if (
+                tag is not None
+                and tag not in transaction.tags
+            ):
+                continue
+
+            if (
+                date_from is not None
+                and transaction.date < date_from
+            ):
+                continue
+
+            if (
+                date_to is not None
+                and transaction.date > date_to
+            ):
+                continue
+
+            if (
+                min_amount is not None
+                and transaction.amount < min_amount
+            ):
+                continue
+
+            if (
+                max_amount is not None
+                and transaction.amount > max_amount
+            ):
+                continue
+
+            yield transaction
