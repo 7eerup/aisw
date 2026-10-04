@@ -134,3 +134,13 @@ class BudgetService:
         end = start + page_size
 
         yield from islice(transactions, start, end)
+
+    def sort_transactions(
+        self,
+        transactions: Iterator[Transaction],
+        sort: str,
+        order: str,
+    ) -> Iterator[Transaction]:
+        """거래 내역을 정렬 순서에 따라 반환한다."""
+        if sort == "id" and order == "asc":
+            yield from transactions

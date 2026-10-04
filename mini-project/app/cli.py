@@ -77,6 +77,8 @@ def handle_list(
     max_amount: int | None = None,
     page: int = 1,
     page_size: int = 10,
+    sort: str = "id",
+    order: str = "asc",
 ) -> None:
     """저장된 거래 내역을 출력한다."""
 
@@ -124,6 +126,12 @@ def handle_list(
         date_to,
         min_amount,
         max_amount,
+    )
+
+    transactions = service.sort_transactions(
+        transactions,
+        sort,
+        order,
     )
 
     # 페이지네이션
@@ -228,6 +236,20 @@ def main() -> None:
         help="페이지당 거래 수 (기본값: 10)",
     )
 
+    list_parser.add_argument(
+        "--sort",
+        choices=["id"],
+        default="id",
+        help="정렬 기준 (기본값: id)",
+    )
+
+    list_parser.add_argument(
+        "--order",
+        choices=["asc"],
+        default="asc",
+        help="정렬 방향 (기본값: asc)",
+    )
+
     args = parser.parse_args()
 
     transaction_repository = TransactionRepository(DATA_DIR / "transactions.jsonl")
@@ -253,4 +275,6 @@ def main() -> None:
             max_amount=args.max_amount,
             page=args.page,
             page_size=args.page_size,
+            sort=args.sort,
+            order=args.order,
         )
