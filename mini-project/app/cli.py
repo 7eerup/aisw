@@ -161,6 +161,30 @@ def handle_list(
         print("조건에 맞는 거래 내역이 없습니다.")
 
 
+def handle_search(
+    service: BudgetService,
+    keyword: str,
+) -> None:
+    """검색어와 일치하는 거래 내역을 출력한다."""
+    found = False
+
+    for transaction in service.search_transactions(keyword):
+        found = True
+
+        print(
+            f"{transaction.id} | "
+            f"{transaction.date} | "
+            f"{transaction.type} | "
+            f"{transaction.category} | "
+            f"{transaction.amount} | "
+            f"{transaction.memo} | "
+            f"{', '.join(transaction.tags)}"
+        )
+
+    if not found:
+        print("검색 결과가 없습니다.")
+
+
 @handle_errors
 def main() -> None:
     parser = argparse.ArgumentParser(description="파일 기반 가계부 프로그램")
@@ -250,6 +274,16 @@ def main() -> None:
         help="정렬 방향 (기본값: asc)",
     )
 
+    search_parser = subparsers.add_parser(
+        "search",
+        help="거래 내역을 검색합니다.",
+    )
+
+    search_parser.add_argument(
+        "keyword",
+        help="메모 또는 태그에서 검색할 키워드",
+    )
+
     args = parser.parse_args()
 
     transaction_repository = TransactionRepository(DATA_DIR / "transactions.jsonl")
@@ -278,3 +312,9 @@ def main() -> None:
             sort=args.sort,
             order=args.order,
         )
+
+    elif args.command == "search":
+        handle_search(
+            service,
+            keyword=args.keyword,
+    )

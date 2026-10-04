@@ -144,3 +144,17 @@ class BudgetService:
         """거래 내역을 정렬 순서에 따라 반환한다."""
         if sort == "id" and order == "asc":
             yield from transactions
+
+    def search_transactions(
+        self,
+        keyword: str,
+    ) -> Iterator[Transaction]:
+        """검색어가 포함된 거래 내역을 한 건씩 반환한다."""
+        keyword = keyword.lower()
+
+        for transaction in self.transaction_repository.get_all():
+            if (
+                keyword in transaction.memo.lower()
+                or any(keyword in tag.lower() for tag in transaction.tags)
+            ):
+                yield transaction
