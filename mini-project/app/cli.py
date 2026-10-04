@@ -68,80 +68,20 @@ def handle_add(service: BudgetService) -> None:
 
 def handle_list(
     service: BudgetService,
-    transaction_type: str | None = None,
-    category: str | None = None,
-    tag: str | None = None,
-    date_from: str | None = None,
-    date_to: str | None = None,
-    min_amount: int | None = None,
-    max_amount: int | None = None,
-    page: int = 1,
-    page_size: int = 10,
-    sort: str = "id",
-    order: str = "asc",
+    limit: int = 10,
 ) -> None:
-    """저장된 거래 내역을 출력한다."""
+    """저장된 거래 내역을 최신순으로 출력한다."""
 
-    # 날짜 검증
-    if date_from is not None and not is_valid_date(date_from):
-        raise ValueError("--from 날짜 형식이 올바르지 않습니다.")
+    if limit < 1:
+        raise ValueError("--limit은 1 이상이어야 합니다.")
 
-    if date_to is not None and not is_valid_date(date_to):
-        raise ValueError("--to 날짜 형식이 올바르지 않습니다.")
+    transactions = service.list_transactions()
 
-    if (
-        date_from is not None
-        and date_to is not None
-        and date_from > date_to
-    ):
-        raise ValueError("--from 날짜는 --to 날짜보다 늦을 수 없습니다.")
-
-    # 금액 검증
-    if min_amount is not None and min_amount < 0:
-        raise ValueError("--min 금액은 0 이상이어야 합니다.")
-
-    if max_amount is not None and max_amount < 0:
-        raise ValueError("--max 금액은 0 이상이어야 합니다.")
-
-    if (
-        min_amount is not None
-        and max_amount is not None
-        and min_amount > max_amount
-    ):
-        raise ValueError("--min 금액은 --max 금액보다 클 수 없습니다.")
-
-    # 페이지 검증
-    if page < 1:
-        raise ValueError("--page는 1 이상이어야 합니다.")
-
-    if page_size < 1:
-        raise ValueError("--page-size는 1 이상이어야 합니다.")
-
-    # 필터링
-    transactions = service.list_transactions(
-        transaction_type,
-        category,
-        tag,
-        date_from,
-        date_to,
-        min_amount,
-        max_amount,
-    )
-
-    transactions = service.sort_transactions(
+    transactions = service.latest_transactions(
         transactions,
-        sort,
-        order,
+        limit,
     )
 
-    # 페이지네이션
-    transactions = service.paginate_transactions(
-        transactions,
-        page,
-        page_size,
-    )
-
-    # 출력
     found = False
 
     for transaction in transactions:
@@ -158,7 +98,7 @@ def handle_list(
         )
 
     if not found:
-        print("조건에 맞는 거래 내역이 없습니다.")
+        print("거래 내역이 없습니다.")
 
 
 def handle_search(
@@ -186,7 +126,7 @@ def handle_search(
 
 
 @handle_errors
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(description="파일 기반 가계부 프로그램")
 
     subparsers = parser.add_subparsers(
@@ -205,73 +145,10 @@ def main() -> None:
     )
 
     list_parser.add_argument(
-        "--type",
-        choices=["income", "expense"],
-        help="거래 타입으로 필터링합니다.",
-    )
-
-    list_parser.add_argument(
-        "--category",
-        help="카테고리로 필터링합니다.",
-    )
-
-    list_parser.add_argument(
-        "--tag",
-        help="태그로 필터링합니다.",
-    )
-
-    list_parser.add_argument(
-        "--from",
-        dest="date_from",
-        help="조회 시작 날짜(YYYY-MM-DD)",
-    )
-
-    list_parser.add_argument(
-        "--to",
-        dest="date_to",
-        help="조회 종료 날짜(YYYY-MM-DD)",
-    )
-
-    list_parser.add_argument(
-        "--min",
-        dest="min_amount",
-        type=int,
-        help="최소 금액",
-    )
-
-    list_parser.add_argument(
-        "--max",
-        dest="max_amount",
-        type=int,
-        help="최대 금액",
-    )
-
-    list_parser.add_argument(
-        "--page",
-        type=int,
-        default=1,
-        help="페이지 번호 (기본값: 1)",
-    )
-
-    list_parser.add_argument(
-        "--page-size",
+        "--limit",
         type=int,
         default=10,
-        help="페이지당 거래 수 (기본값: 10)",
-    )
-
-    list_parser.add_argument(
-        "--sort",
-        choices=["id"],
-        default="id",
-        help="정렬 기준 (기본값: id)",
-    )
-
-    list_parser.add_argument(
-        "--order",
-        choices=["asc"],
-        default="asc",
-        help="정렬 방향 (기본값: asc)",
+        help="출력할 최대 거래 수 (기본값: 10)",
     )
 
     search_parser = subparsers.add_parser(
@@ -300,21 +177,13 @@ def main() -> None:
     elif args.command == "list":
         handle_list(
             service,
-            transaction_type=args.type,
-            category=args.category,
-            tag=args.tag,
-            date_from=args.date_from,
-            date_to=args.date_to,
-            min_amount=args.min_amount,
-            max_amount=args.max_amount,
-            page=args.page,
-            page_size=args.page_size,
-            sort=args.sort,
-            order=args.order,
+            limit=args.limit,
         )
 
     elif args.command == "search":
         handle_search(
             service,
             keyword=args.keyword,
-    )
+        )
+
+    return 0

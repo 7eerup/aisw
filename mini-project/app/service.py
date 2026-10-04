@@ -1,5 +1,5 @@
+from collections import deque
 from typing import Iterator
-from itertools import islice
 
 from .models import Transaction
 from .repository import TransactionRepository, CategoryRepository
@@ -67,83 +67,20 @@ class BudgetService:
 
         return transaction
 
-    def list_transactions(
-        self,
-        transaction_type: str | None = None,
-        category: str | None = None,
-        tag: str | None = None,
-        date_from: str | None = None,
-        date_to: str | None = None,
-        min_amount: int | None = None,
-        max_amount: int | None = None,
-    ) -> Iterator[Transaction]:
-        """조건에 맞는 거래 내역을 한 건씩 반환한다."""
-        for transaction in self.transaction_repository.get_all():
-            if (
-                transaction_type is not None
-                and transaction.type != transaction_type
-            ):
-                continue
+    def list_transactions(self) -> Iterator[Transaction]:
+        """저장된 거래 내역을 한 건씩 반환한다."""
+        yield from self.transaction_repository.get_all()
 
-            if (
-                category is not None
-                and transaction.category != category
-            ):
-                continue
-
-            if (
-                tag is not None
-                and tag not in transaction.tags
-            ):
-                continue
-
-            if (
-                date_from is not None
-                and transaction.date < date_from
-            ):
-                continue
-
-            if (
-                date_to is not None
-                and transaction.date > date_to
-            ):
-                continue
-
-            if (
-                min_amount is not None
-                and transaction.amount < min_amount
-            ):
-                continue
-
-            if (
-                max_amount is not None
-                and transaction.amount > max_amount
-            ):
-                continue
-
-            yield transaction
-
-    def paginate_transactions(
+    def latest_transactions(
         self,
         transactions: Iterator[Transaction],
-        page: int,
-        page_size: int,
+        limit: int,
     ) -> Iterator[Transaction]:
-        """거래 내역을 페이지 단위로 반환한다."""
-        start = (page - 1) * page_size
-        end = start + page_size
+        """거래 내역 중 최신 N건을 최신순으로 반환한다."""
+        latest = deque(transactions, maxlen=limit)
 
-        yield from islice(transactions, start, end)
-
-    def sort_transactions(
-        self,
-        transactions: Iterator[Transaction],
-        sort: str,
-        order: str,
-    ) -> Iterator[Transaction]:
-        """거래 내역을 정렬 순서에 따라 반환한다."""
-        if sort == "id" and order == "asc":
-            yield from transactions
+        while latest:
+            yield latest.pop()
 
     def search_transactions(
         self,
