@@ -1,4 +1,6 @@
 import argparse
+import shutil
+from datetime import datetime
 from pathlib import Path
 
 from .decorators import handle_errors
@@ -347,6 +349,27 @@ def handle_delete(
     print(f"[삭제 완료] id={transaction_id}")
 
 
+def handle_backup(data_dir: Path) -> None:
+    """데이터 파일을 타임스탬프가 포함된 이름으로 백업한다."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = data_dir / "backups"
+    backup_dir.mkdir(exist_ok=True)
+
+    filenames = (
+        "transactions.jsonl",
+        "categories.jsonl",
+        "budgets.jsonl",
+    )
+
+    for filename in filenames:
+        source = data_dir / filename
+        backup = backup_dir / f"{source.stem}_{timestamp}{source.suffix}"
+
+        shutil.copy2(source, backup)
+
+    print(f"[백업 완료] {backup_dir}")
+
+
 @handle_errors
 def main() -> int:
     """명령행 인자를 처리하고 가계부 기능을 실행한다."""
@@ -602,6 +625,11 @@ def main() -> int:
         help="내보낼 종료 날짜(YYYY-MM-DD)",
     )
 
+    subparsers.add_parser(
+        "backup",
+        help="데이터 파일을 백업합니다.",
+    )
+
     args = parser.parse_args()
 
     data_dir = args.data_dir
@@ -708,5 +736,8 @@ def main() -> int:
             date_from=args.date_from,
             date_to=args.date_to,
         )
+
+    elif args.command == "backup":
+        handle_backup(data_dir)
 
     return 0
