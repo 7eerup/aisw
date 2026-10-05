@@ -2,8 +2,8 @@ from collections import deque
 from typing import Iterator
 
 from .models import Transaction
-from .repository import TransactionRepository, CategoryRepository
-from .validators import is_valid_date, is_valid_type, is_valid_amount
+from .repository import CategoryRepository, TransactionRepository
+from .validators import is_valid_amount, is_valid_date, is_valid_type
 
 
 class BudgetService:
@@ -11,17 +11,19 @@ class BudgetService:
         self,
         transaction_repository: TransactionRepository,
         category_repository: CategoryRepository,
-    ):
+    ) -> None:
         self.transaction_repository = transaction_repository
         self.category_repository = category_repository
 
     def category_exists(self, category: str) -> bool:
+        """카테고리의 존재 여부를 반환한다."""
         return any(
             saved_category == category
             for saved_category in self.category_repository.get_all()
         )
 
     def _generate_id(self) -> str:
+        """새로운 거래 ID를 생성한다."""
         max_number = 0
 
         for transaction in self.transaction_repository.get_all():
@@ -84,14 +86,38 @@ class BudgetService:
 
     def search_transactions(
         self,
-        keyword: str,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        category: str | None = None,
+        transaction_type: str | None = None,
+        query: str | None = None,
+        tag: str | None = None,
     ) -> Iterator[Transaction]:
-        """검색어가 포함된 거래 내역을 한 건씩 반환한다."""
-        keyword = keyword.lower()
+        """조건에 맞는 거래 내역을 최신순으로 한 건씩 반환한다."""
 
-        for transaction in self.transaction_repository.get_all():
+        for transaction in self.transaction_repository.get_all_latest():
+            if date_from is not None and transaction.date < date_from:
+                continue
+
+            if date_to is not None and transaction.date > date_to:
+                continue
+
+            if category is not None and transaction.category != category:
+                continue
+
             if (
-                keyword in transaction.memo.lower()
-                or any(keyword in tag.lower() for tag in transaction.tags)
+                transaction_type is not None
+                and transaction.type != transaction_type
             ):
-                yield transaction
+                continue
+
+            if (
+                query is not None
+                and query.lower() not in transaction.memo.lower()
+            ):
+                continue
+
+            if tag is not None and tag not in transaction.tags:
+                continue
+
+            yield transaction

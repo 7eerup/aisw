@@ -6,7 +6,7 @@ from .models import Transaction
 
 
 class TransactionRepository:
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: Path) -> None:
         self.file_path = file_path
 
     def get_all(self) -> Iterator[Transaction]:
@@ -16,6 +16,32 @@ class TransactionRepository:
                 if line.strip():
                     data = json.loads(line)
                     yield Transaction(**data)
+
+    def get_all_latest(self) -> Iterator[Transaction]:
+        """거래 내역을 파일 끝에서부터 읽어 최신순으로 반환한다."""
+        with self.file_path.open("rb") as file:
+            file.seek(0, 2)
+            position = file.tell()
+            buffer = b""
+
+            while position > 0:
+                position -= 1
+                file.seek(position)
+                byte = file.read(1)
+
+                if byte == b"\n":
+                    if buffer:
+                        line = buffer[::-1].decode("utf-8")
+                        data = json.loads(line)
+                        yield Transaction(**data)
+                        buffer = b""
+                else:
+                    buffer += byte
+
+            if buffer:
+                line = buffer[::-1].decode("utf-8")
+                data = json.loads(line)
+                yield Transaction(**data)
 
     def add(self, transaction: Transaction) -> None:
         """거래 내역 한 건을 JSONL 파일에 추가한다."""
@@ -34,7 +60,7 @@ class TransactionRepository:
 
 
 class CategoryRepository:
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: Path) -> None:
         self.file_path = file_path
 
     def get_all(self) -> Iterator[str]:
@@ -54,7 +80,7 @@ class CategoryRepository:
 
 
 class BudgetRepository:
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: Path) -> None:
         self.file_path = file_path
 
     def get_all(self) -> Iterator[dict]:

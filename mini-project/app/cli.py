@@ -1,10 +1,10 @@
 import argparse
 from pathlib import Path
 
-from .repository import TransactionRepository, CategoryRepository
-from .service import BudgetService
 from .decorators import handle_errors
-from .validators import is_valid_date, is_valid_type, is_valid_amount
+from .repository import CategoryRepository, TransactionRepository
+from .service import BudgetService
+from .validators import is_valid_amount, is_valid_date, is_valid_type
 
 DATA_DIR = Path("data")
 
@@ -103,12 +103,40 @@ def handle_list(
 
 def handle_search(
     service: BudgetService,
-    keyword: str,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    category: str | None = None,
+    transaction_type: str | None = None,
+    query: str | None = None,
+    tag: str | None = None,
 ) -> None:
-    """검색어와 일치하는 거래 내역을 출력한다."""
+    """조건에 맞는 거래 내역을 최신순으로 출력한다."""
+
+    if date_from is not None and not is_valid_date(date_from):
+        raise ValueError("--from 날짜 형식이 올바르지 않습니다.")
+
+    if date_to is not None and not is_valid_date(date_to):
+        raise ValueError("--to 날짜 형식이 올바르지 않습니다.")
+
+    if (
+        date_from is not None
+        and date_to is not None
+        and date_from > date_to
+    ):
+        raise ValueError("--from 날짜는 --to 날짜보다 늦을 수 없습니다.")
+
+    transactions = service.search_transactions(
+        date_from=date_from,
+        date_to=date_to,
+        category=category,
+        transaction_type=transaction_type,
+        query=query,
+        tag=tag,
+    )
+
     found = False
 
-    for transaction in service.search_transactions(keyword):
+    for transaction in transactions:
         found = True
 
         print(
@@ -127,6 +155,7 @@ def handle_search(
 
 @handle_errors
 def main() -> int:
+    """명령행 인자를 처리하고 가계부 기능을 실행한다."""
     parser = argparse.ArgumentParser(description="파일 기반 가계부 프로그램")
 
     subparsers = parser.add_subparsers(
@@ -157,8 +186,38 @@ def main() -> int:
     )
 
     search_parser.add_argument(
-        "keyword",
-        help="메모 또는 태그에서 검색할 키워드",
+        "--from",
+        dest="date_from",
+        help="검색 시작 날짜(YYYY-MM-DD)",
+    )
+
+    search_parser.add_argument(
+        "--to",
+        dest="date_to",
+        help="검색 종료 날짜(YYYY-MM-DD)",
+    )
+
+    search_parser.add_argument(
+        "--category",
+        help="카테고리로 검색합니다.",
+    )
+
+    search_parser.add_argument(
+        "--type",
+        dest="transaction_type",
+        choices=["income", "expense"],
+        help="거래 타입으로 검색합니다.",
+    )
+
+    search_parser.add_argument(
+        "--q",
+        dest="query",
+        help="메모 키워드로 검색합니다.",
+    )
+
+    search_parser.add_argument(
+        "--tag",
+        help="태그로 검색합니다.",
     )
 
     args = parser.parse_args()
@@ -183,7 +242,12 @@ def main() -> int:
     elif args.command == "search":
         handle_search(
             service,
-            keyword=args.keyword,
+            date_from=args.date_from,
+            date_to=args.date_to,
+            category=args.category,
+            transaction_type=args.transaction_type,
+            query=args.query,
+            tag=args.tag,
         )
 
     return 0
