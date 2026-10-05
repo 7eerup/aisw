@@ -1,4 +1,5 @@
 from collections import deque
+from pathlib import Path
 from typing import Iterator
 
 from .models import Transaction
@@ -282,3 +283,56 @@ class BudgetService:
 
         if not deleted:
             raise ValueError("해당 ID의 거래 내역이 없습니다.")
+
+    def import_transactions(self, csv_path: Path) -> int:
+        """CSV 파일의 거래 데이터를 검증하고 저장한다."""
+        count = 0
+
+        for row in self.transaction_repository.import_csv(csv_path):
+            tags = [
+                tag.strip()
+                for tag in row.get("tags", "").split(",")
+                if tag.strip()
+            ]
+
+            try:
+                amount = int(row["amount"])
+            except ValueError as error:
+                raise ValueError(
+                    "CSV의 amount는 정수여야 합니다."
+                ) from error
+
+            self.add_transaction(
+                date=row["date"],
+                transaction_type=row["type"],
+                amount=amount,
+                category=row["category"],
+                memo=row.get("memo", ""),
+                tags=tags,
+            )
+
+            count += 1
+
+        return count
+
+    def export_transactions(
+        self,
+        csv_path: Path,
+        month: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+    ) -> int:
+        """조건에 맞는 거래 내역을 CSV 파일로 저장한다."""
+        if month is not None:
+            date_from = f"{month}-01"
+            date_to = f"{month}-31"
+
+        transactions = self.search_transactions(
+            date_from=date_from,
+            date_to=date_to,
+        )
+
+        return self.transaction_repository.export_csv(
+            csv_path,
+            transactions,
+        )

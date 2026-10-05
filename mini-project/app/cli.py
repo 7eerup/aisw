@@ -6,11 +6,15 @@ from .repository import BudgetRepository, CategoryRepository, TransactionReposit
 from .service import BudgetService
 from .validators import is_valid_amount, is_valid_date, is_valid_month, is_valid_type
 
-DATA_DIR = Path("data")
 
 
 def handle_add(service: BudgetService) -> None:
     """대화형으로 거래 정보를 입력받아 저장한다."""
+
+    if not any(service.list_categories()):
+        raise ValueError(
+            "등록된 카테고리가 없습니다. category add로 먼저 등록하세요."
+        )
 
     while True:
         date = input("날짜(YYYY-MM-DD): ")
@@ -276,6 +280,64 @@ def handle_update(
     print(f"[수정 완료] id={transaction.id}")
 
 
+def handle_import(
+    service: BudgetService,
+    csv_path: str,
+) -> None:
+    """CSV 파일의 거래 내역을 가져온다."""
+    count = service.import_transactions(Path(csv_path))
+    print(f"[가져오기 완료] {count}건")
+
+
+def handle_export(
+    service: BudgetService,
+    csv_path: str,
+    month: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+) -> None:
+    """조건에 맞는 거래 내역을 CSV 파일로 내보낸다."""
+
+    if month is None and (date_from is None or date_to is None):
+        raise ValueError(
+            "--month 또는 --from과 --to를 함께 지정해야 합니다."
+        )
+
+    if month is not None and (
+        date_from is not None or date_to is not None
+    ):
+        raise ValueError(
+            "--month와 --from/--to는 함께 사용할 수 없습니다."
+        )
+
+    if month is not None and not is_valid_month(month):
+        raise ValueError("--month 형식은 YYYY-MM이어야 합니다.")
+
+    if date_from is not None and not is_valid_date(date_from):
+        raise ValueError("--from 날짜 형식이 올바르지 않습니다.")
+
+    if date_to is not None and not is_valid_date(date_to):
+        raise ValueError("--to 날짜 형식이 올바르지 않습니다.")
+
+    if (
+        date_from is not None
+        and date_to is not None
+        and date_from > date_to
+    ):
+        raise ValueError(
+            "--from 날짜는 --to 날짜보다 늦을 수 없습니다."
+        )
+
+    count = service.export_transactions(
+        csv_path=Path(csv_path),
+        month=month,
+        date_from=date_from,
+        date_to=date_to,
+    )
+
+    print(f"[내보내기 완료] {csv_path} ({count}건)")
+
+
 def handle_delete(
     service: BudgetService,
     transaction_id: str,
@@ -289,6 +351,13 @@ def handle_delete(
 def main() -> int:
     """명령행 인자를 처리하고 가계부 기능을 실행한다."""
     parser = argparse.ArgumentParser(description="파일 기반 가계부 프로그램")
+
+    parser.add_argument(
+        "--data-dir",
+        type=Path,
+        default=Path("data"),
+        help="데이터 저장 폴더 (기본값: data)",
+    )
 
     subparsers = parser.add_subparsers(
         dest="command",
@@ -491,11 +560,64 @@ def main() -> int:
         help="삭제할 거래 ID",
     )
 
+    import_parser = subparsers.add_parser(
+        "import",
+        help="CSV 파일의 거래 내역을 가져옵니다.",
+    )
+
+    import_parser.add_argument(
+        "--from",
+        dest="csv_path",
+        required=True,
+        help="가져올 CSV 파일 경로",
+    )
+
+
+    export_parser = subparsers.add_parser(
+        "export",
+        help="거래 내역을 CSV 파일로 내보냅니다.",
+    )
+
+    export_parser.add_argument(
+        "--out",
+        dest="csv_path",
+        required=True,
+        help="저장할 CSV 파일 경로",
+    )
+
+    export_parser.add_argument(
+        "--month",
+        help="내보낼 연월(YYYY-MM)",
+    )
+
+    export_parser.add_argument(
+        "--from",
+        dest="date_from",
+        help="내보낼 시작 날짜(YYYY-MM-DD)",
+    )
+
+    export_parser.add_argument(
+        "--to",
+        dest="date_to",
+        help="내보낼 종료 날짜(YYYY-MM-DD)",
+    )
+
     args = parser.parse_args()
 
-    transaction_repository = TransactionRepository(DATA_DIR / "transactions.jsonl")
-    category_repository = CategoryRepository(DATA_DIR / "categories.jsonl")
-    budget_repository = BudgetRepository(DATA_DIR / "budgets.jsonl")
+    data_dir = args.data_dir
+
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    for filename in (
+        "transactions.jsonl",
+        "categories.jsonl",
+        "budgets.jsonl",
+    ):
+        (data_dir / filename).touch(exist_ok=True)
+
+    transaction_repository = TransactionRepository(data_dir / "transactions.jsonl")
+    category_repository = CategoryRepository(data_dir / "categories.jsonl")
+    budget_repository = BudgetRepository(data_dir / "budgets.jsonl")
 
     service = BudgetService(
         transaction_repository,
@@ -570,6 +692,21 @@ def main() -> int:
         handle_delete(
             service,
             transaction_id=args.transaction_id,
+        )
+
+    elif args.command == "import":
+        handle_import(
+            service,
+            csv_path=args.csv_path,
+        )
+
+    elif args.command == "export":
+        handle_export(
+            service,
+            csv_path=args.csv_path,
+            month=args.month,
+            date_from=args.date_from,
+            date_to=args.date_to,
         )
 
     return 0

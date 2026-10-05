@@ -1,3 +1,4 @@
+import csv
 import json
 from pathlib import Path
 from typing import Iterator
@@ -129,6 +130,69 @@ class TransactionRepository:
             temp_path.unlink()
 
         return deleted
+
+    def import_csv(self, csv_path: Path) -> Iterator[dict]:
+        """CSV 파일의 거래 데이터를 한 건씩 반환한다."""
+        required_fields = {
+            "date",
+            "type",
+            "category",
+            "amount",
+        }
+
+        with csv_path.open("r", encoding="utf-8", newline="") as file:
+            reader = csv.DictReader(file)
+
+            fieldnames = set(reader.fieldnames or [])
+            missing_fields = required_fields - fieldnames
+
+            if missing_fields:
+                missing = ", ".join(sorted(missing_fields))
+                raise ValueError(
+                    f"CSV 필수 컬럼이 없습니다: {missing}"
+                )
+
+            for row in reader:
+                yield row
+
+    def export_csv(
+        self,
+        csv_path: Path,
+        transactions: Iterator[Transaction],
+    ) -> int:
+        """거래 내역을 CSV 파일로 저장하고 처리 건수를 반환한다."""
+        fieldnames = [
+            "date",
+            "type",
+            "category",
+            "amount",
+            "memo",
+            "tags",
+        ]
+
+        count = 0
+
+        with csv_path.open("w", encoding="utf-8", newline="") as file:
+            writer = csv.DictWriter(
+                file,
+                fieldnames=fieldnames,
+            )
+            writer.writeheader()
+
+            for transaction in transactions:
+                writer.writerow(
+                    {
+                        "date": transaction.date,
+                        "type": transaction.type,
+                        "category": transaction.category,
+                        "amount": transaction.amount,
+                        "memo": transaction.memo,
+                        "tags": ",".join(transaction.tags),
+                    }
+                )
+                count += 1
+
+        return count
 
 
 class CategoryRepository:
