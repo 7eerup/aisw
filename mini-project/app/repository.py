@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Iterator
 
-from .models import Transaction
+from .models import RecurringTransaction, Transaction
 
 
 class TransactionRepository:
@@ -193,6 +193,34 @@ class TransactionRepository:
                 count += 1
 
         return count
+
+
+class RecurringRepository:
+    def __init__(self, file_path: Path) -> None:
+        self.file_path = file_path
+
+    def get_all(self) -> Iterator[RecurringTransaction]:
+        """반복 내역을 한 건씩 읽어 반환한다."""
+        with self.file_path.open("r", encoding="utf-8") as file:
+            for line in file:
+                if line.strip():
+                    data = json.loads(line)
+                    yield RecurringTransaction(**data)
+
+    def add(self, recurring: RecurringTransaction) -> None:
+        """반복 내역 한 건을 JSONL 파일에 추가한다."""
+        data = {
+            "id": recurring.id,
+            "type": recurring.type,
+            "day": recurring.day,
+            "amount": recurring.amount,
+            "category": recurring.category,
+            "memo": recurring.memo,
+            "tags": recurring.tags,
+        }
+
+        with self.file_path.open("a", encoding="utf-8") as file:
+            file.write(json.dumps(data, ensure_ascii=False) + "\n")
 
 
 class CategoryRepository:

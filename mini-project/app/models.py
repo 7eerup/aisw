@@ -10,3 +10,14 @@ class Transaction:
     category: str
     memo: str
     tags: list[str]
+
+
+@dataclass
+class RecurringTransaction:
+    id: str
+    type: str
+    day: int
+    amount: int
+    category: str
+    memo: str
+    tags: list[str]

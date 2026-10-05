@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .decorators import handle_errors
-from .repository import BudgetRepository, CategoryRepository, TransactionRepository
+from .repository import BudgetRepository, CategoryRepository, RecurringRepository, TransactionRepository
 from .service import BudgetService
 from .validators import is_valid_amount, is_valid_date, is_valid_month, is_valid_type
 
@@ -370,6 +370,63 @@ def handle_backup(data_dir: Path) -> None:
     print(f"[백업 완료] {backup_dir}")
 
 
+def handle_recurring_add(
+    service: BudgetService,
+    day: int,
+    transaction_type: str,
+    amount: int,
+    category: str,
+    memo: str,
+    tags: str,
+) -> None:
+    """반복 내역을 등록한다."""
+    parsed_tags = [
+        tag.strip()
+        for tag in tags.split(",")
+        if tag.strip()
+    ]
+
+    recurring = service.add_recurring(
+        day=day,
+        transaction_type=transaction_type,
+        amount=amount,
+        category=category,
+        memo=memo,
+        tags=parsed_tags,
+    )
+
+    print(f"[반복 내역 등록 완료] id={recurring.id}")
+
+
+def handle_recurring_list(service: BudgetService) -> None:
+    """등록된 반복 내역을 출력한다."""
+    found = False
+
+    for recurring in service.list_recurring():
+        found = True
+        print(
+            f"{recurring.id} | "
+            f"day={recurring.day} | "
+            f"{recurring.type} | "
+            f"{recurring.category} | "
+            f"{recurring.amount} | "
+            f"{recurring.memo} | "
+            f"{', '.join(recurring.tags)}"
+        )
+
+    if not found:
+        print("등록된 반복 내역이 없습니다.")
+
+
+def handle_recurring_apply(
+    service: BudgetService,
+    month: str,
+) -> None:
+    """반복 내역을 지정한 월의 거래로 생성한다."""
+    count = service.apply_recurring(month)
+    print(f"[반복 내역 적용 완료] {count}건")
+
+
 @handle_errors
 def main() -> int:
     """명령행 인자를 처리하고 가계부 기능을 실행한다."""
@@ -630,6 +687,77 @@ def main() -> int:
         help="데이터 파일을 백업합니다.",
     )
 
+    recurring_parser = subparsers.add_parser(
+        "recurring",
+        help="반복 내역을 관리합니다.",
+    )
+
+    recurring_subparsers = recurring_parser.add_subparsers(
+        dest="recurring_command",
+        required=True,
+    )
+
+    recurring_add_parser = recurring_subparsers.add_parser(
+        "add",
+        help="반복 내역을 등록합니다.",
+    )
+
+    recurring_add_parser.add_argument(
+        "--day",
+        type=int,
+        required=True,
+        help="매월 적용할 날짜(1~28)",
+    )
+
+    recurring_add_parser.add_argument(
+        "--type",
+        dest="transaction_type",
+        choices=["income", "expense"],
+        required=True,
+        help="거래 타입",
+    )
+
+    recurring_add_parser.add_argument(
+        "--amount",
+        type=int,
+        required=True,
+        help="거래 금액",
+    )
+
+    recurring_add_parser.add_argument(
+        "--category",
+        required=True,
+        help="카테고리",
+    )
+
+    recurring_add_parser.add_argument(
+        "--memo",
+        default="",
+        help="메모",
+    )
+
+    recurring_add_parser.add_argument(
+        "--tags",
+        default="",
+        help="태그(쉼표로 구분)",
+    )
+
+    recurring_subparsers.add_parser(
+        "list",
+        help="반복 내역을 조회합니다.",
+    )
+
+    recurring_apply_parser = recurring_subparsers.add_parser(
+        "apply",
+        help="반복 내역을 지정한 월에 적용합니다.",
+    )
+
+    recurring_apply_parser.add_argument(
+        "--month",
+        required=True,
+        help="적용할 연월(YYYY-MM)",
+    )
+
     args = parser.parse_args()
 
     data_dir = args.data_dir
@@ -640,17 +768,20 @@ def main() -> int:
         "transactions.jsonl",
         "categories.jsonl",
         "budgets.jsonl",
+        "recurring.jsonl",
     ):
         (data_dir / filename).touch(exist_ok=True)
 
     transaction_repository = TransactionRepository(data_dir / "transactions.jsonl")
     category_repository = CategoryRepository(data_dir / "categories.jsonl")
     budget_repository = BudgetRepository(data_dir / "budgets.jsonl")
+    recurring_repository = RecurringRepository(data_dir / "recurring.jsonl")
 
     service = BudgetService(
         transaction_repository,
         category_repository,
         budget_repository,
+        recurring_repository
     )
 
     if args.command == "add":
@@ -739,5 +870,26 @@ def main() -> int:
 
     elif args.command == "backup":
         handle_backup(data_dir)
+
+    elif args.command == "recurring":
+        if args.recurring_command == "add":
+            handle_recurring_add(
+                service,
+                day=args.day,
+                transaction_type=args.transaction_type,
+                amount=args.amount,
+                category=args.category,
+                memo=args.memo,
+                tags=args.tags,
+            )
+
+        elif args.recurring_command == "list":
+            handle_recurring_list(service)
+
+        elif args.recurring_command == "apply":
+            handle_recurring_apply(
+                service,
+                month=args.month,
+            )
 
     return 0

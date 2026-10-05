@@ -2,9 +2,9 @@ from collections import deque
 from pathlib import Path
 from typing import Iterator
 
-from .models import Transaction
-from .repository import BudgetRepository, CategoryRepository, TransactionRepository
-from .validators import is_valid_amount, is_valid_date, is_valid_type
+from .models import RecurringTransaction, Transaction
+from .repository import BudgetRepository, CategoryRepository, RecurringRepository, TransactionRepository
+from .validators import is_valid_amount, is_valid_date, is_valid_month, is_valid_type
 
 
 class BudgetService:
@@ -13,10 +13,12 @@ class BudgetService:
         transaction_repository: TransactionRepository,
         category_repository: CategoryRepository,
         budget_repository: BudgetRepository,
+        recurring_repository: RecurringRepository,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.category_repository = category_repository
         self.budget_repository = budget_repository
+        self.recurring_repository = recurring_repository
 
     def category_exists(self, category: str) -> bool:
         """카테고리의 존재 여부를 반환한다."""
@@ -34,6 +36,83 @@ class BudgetService:
             max_number = max(max_number, number)
 
         return f"TX-{max_number + 1:06d}"
+
+    def add_recurring(
+        self,
+        day: int,
+        transaction_type: str,
+        amount: int,
+        category: str,
+        memo: str = "",
+        tags: list[str] | None = None,
+    ) -> RecurringTransaction:
+        """반복 내역을 검증하고 저장한다."""
+        if day < 1 or day > 28:
+            raise ValueError("반복 날짜는 1일부터 28일 사이여야 합니다.")
+
+        if not is_valid_type(transaction_type):
+            raise ValueError(
+                "거래 타입은 income 또는 expense여야 합니다."
+            )
+
+        if not is_valid_amount(amount):
+            raise ValueError("금액은 0보다 커야 합니다.")
+
+        if not self.category_exists(category):
+            raise ValueError("등록되지 않은 카테고리입니다.")
+
+        recurring = RecurringTransaction(
+            id=self._generate_recurring_id(),
+            type=transaction_type,
+            day=day,
+            amount=amount,
+            category=category,
+            memo=memo,
+            tags=tags or [],
+        )
+
+        self.recurring_repository.add(recurring)
+
+        return recurring
+
+
+    def list_recurring(self) -> Iterator[RecurringTransaction]:
+        """등록된 반복 내역을 한 건씩 반환한다."""
+        yield from self.recurring_repository.get_all()
+
+
+    def apply_recurring(self, month: str) -> int:
+        """등록된 반복 내역을 지정한 월의 거래로 생성한다."""
+        if not is_valid_month(month):
+            raise ValueError("월 형식은 YYYY-MM이어야 합니다.")
+
+        count = 0
+
+        for recurring in self.recurring_repository.get_all():
+            date = f"{month}-{recurring.day:02d}"
+
+            self.add_transaction(
+                date=date,
+                transaction_type=recurring.type,
+                amount=recurring.amount,
+                category=recurring.category,
+                memo=recurring.memo,
+                tags=recurring.tags,
+            )
+
+            count += 1
+
+        return count
+
+    def _generate_recurring_id(self) -> str:
+        """새로운 반복 내역 ID를 생성한다."""
+        max_number = 0
+
+        for recurring in self.recurring_repository.get_all():
+            number = int(recurring.id.split("-")[1])
+            max_number = max(max_number, number)
+
+        return f"RC-{max_number + 1:06d}"
 
     def add_transaction(
         self,
