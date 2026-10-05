@@ -18,3 +18,12 @@ def is_valid_type(value: str) -> bool:
 def is_valid_amount(value: int) -> bool:
     """금액이 양수인지 확인한다."""
     return value > 0
+
+
+def is_valid_month(value: str) -> bool:
+    """YYYY-MM 형식의 유효한 연월인지 확인한다."""
+    try:
+        datetime.strptime(value, "%Y-%m")
+        return True
+    except ValueError:
+        return False

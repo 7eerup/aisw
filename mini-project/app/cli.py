@@ -4,7 +4,7 @@ from pathlib import Path
 from .decorators import handle_errors
 from .repository import CategoryRepository, TransactionRepository
 from .service import BudgetService
-from .validators import is_valid_amount, is_valid_date, is_valid_type
+from .validators import is_valid_amount, is_valid_date, is_valid_type, is_valid_month
 
 DATA_DIR = Path("data")
 
@@ -153,6 +153,38 @@ def handle_search(
         print("검색 결과가 없습니다.")
 
 
+def handle_summary(
+    service: BudgetService,
+    month: str,
+    top: int = 3,
+) -> None:
+    """월별 수입, 지출, 잔액과 카테고리별 지출을 출력한다."""
+
+    if not is_valid_month(month):
+        raise ValueError("--month 형식은 YYYY-MM이어야 합니다.")
+
+    if top < 1:
+        raise ValueError("--top은 1 이상이어야 합니다.")
+
+    summary = service.summarize_month(
+        month=month,
+        top=top,
+    )
+
+    if not summary["found"]:
+        print(f"{month} 거래 내역이 없습니다.")
+        return
+
+    print(f"총수입: {summary['income']}")
+    print(f"총지출: {summary['expense']}")
+    print(f"잔액: {summary['balance']}")
+
+    print("\n카테고리별 지출 TOP")
+
+    for category, amount in summary["top_categories"]:
+        print(f"{category}: {amount}")
+
+
 @handle_errors
 def main() -> int:
     """명령행 인자를 처리하고 가계부 기능을 실행한다."""
@@ -220,6 +252,24 @@ def main() -> int:
         help="태그로 검색합니다.",
     )
 
+    summary_parser = subparsers.add_parser(
+        "summary",
+        help="월별 거래 요약을 조회합니다.",
+    )
+
+    summary_parser.add_argument(
+        "--month",
+        required=True,
+        help="조회할 연월(YYYY-MM)",
+    )
+
+    summary_parser.add_argument(
+        "--top",
+        type=int,
+        default=3,
+        help="출력할 지출 카테고리 수 (기본값: 3)",
+    )
+
     args = parser.parse_args()
 
     transaction_repository = TransactionRepository(DATA_DIR / "transactions.jsonl")
@@ -248,6 +298,13 @@ def main() -> int:
             transaction_type=args.transaction_type,
             query=args.query,
             tag=args.tag,
+        )
+
+    elif args.command == "summary":
+        handle_summary(
+            service,
+            month=args.month,
+            top=args.top,
         )
 
     return 0

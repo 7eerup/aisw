@@ -121,3 +121,44 @@ class BudgetService:
                 continue
 
             yield transaction
+
+    def summarize_month(
+        self,
+        month: str,
+        top: int = 3,
+    ) -> dict:
+        """월별 수입, 지출, 잔액과 카테고리별 지출을 집계한다."""
+        total_income = 0
+        total_expense = 0
+        category_expenses: dict[str, int] = {}
+        found = False
+
+        for transaction in self.transaction_repository.get_all():
+            if not transaction.date.startswith(f"{month}-"):
+                continue
+
+            found = True
+
+            if transaction.type == "income":
+                total_income += transaction.amount
+
+            elif transaction.type == "expense":
+                total_expense += transaction.amount
+                category_expenses[transaction.category] = (
+                    category_expenses.get(transaction.category, 0)
+                    + transaction.amount
+                )
+
+        top_categories = sorted(
+            category_expenses.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )[:top]
+
+        return {
+            "found": found,
+            "income": total_income,
+            "expense": total_expense,
+            "balance": total_income - total_expense,
+            "top_categories": top_categories,
+        }
