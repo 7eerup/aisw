@@ -192,3 +192,38 @@ class BudgetService:
             month=month,
             amount=amount,
         )
+
+    def add_category(self, name: str) -> None:
+        """새로운 카테고리를 저장한다."""
+        name = name.strip()
+
+        if not name:
+            raise ValueError("카테고리 이름은 비어 있을 수 없습니다.")
+
+        if self.category_exists(name):
+            raise ValueError("이미 등록된 카테고리입니다.")
+
+        self.category_repository.add(name)
+
+    def list_categories(self) -> Iterator[str]:
+        """등록된 카테고리를 한 건씩 반환한다."""
+        yield from self.category_repository.get_all()
+
+    def category_in_use(self, name: str) -> bool:
+        """카테고리가 거래 내역에서 사용 중인지 확인한다."""
+        return any(
+            transaction.category == name
+            for transaction in self.transaction_repository.get_all()
+        )
+
+    def remove_category(self, name: str) -> None:
+        """사용 중이지 않은 카테고리를 삭제한다."""
+        if not self.category_exists(name):
+            raise ValueError("등록되지 않은 카테고리입니다.")
+
+        if self.category_in_use(name):
+            raise ValueError(
+                "거래 내역에서 사용 중인 카테고리는 삭제할 수 없습니다."
+            )
+
+        self.category_repository.remove(name)

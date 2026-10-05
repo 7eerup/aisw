@@ -4,7 +4,7 @@ from pathlib import Path
 from .decorators import handle_errors
 from .repository import BudgetRepository, CategoryRepository, TransactionRepository
 from .service import BudgetService
-from .validators import is_valid_amount, is_valid_date, is_valid_type, is_valid_month
+from .validators import is_valid_amount, is_valid_date, is_valid_month, is_valid_type
 
 DATA_DIR = Path("data")
 
@@ -213,6 +213,36 @@ def handle_budget_set(
     print(f"[예산 설정 완료] {month}: {amount}")
 
 
+def handle_category_add(
+    service: BudgetService,
+    name: str,
+) -> None:
+    """카테고리를 추가한다."""
+    service.add_category(name)
+    print(f"[카테고리 추가 완료] {name}")
+
+
+def handle_category_list(service: BudgetService) -> None:
+    """등록된 카테고리 목록을 출력한다."""
+    found = False
+
+    for category in service.list_categories():
+        found = True
+        print(category)
+
+    if not found:
+        print("등록된 카테고리가 없습니다.")
+
+
+def handle_category_remove(
+    service: BudgetService,
+    name: str,
+) -> None:
+    """카테고리를 삭제한다."""
+    service.remove_category(name)
+    print(f"[카테고리 삭제 완료] {name}")
+
+
 @handle_errors
 def main() -> int:
     """명령행 인자를 처리하고 가계부 기능을 실행한다."""
@@ -326,6 +356,41 @@ def main() -> int:
         help="예산 금액",
     )
 
+    category_parser = subparsers.add_parser(
+        "category",
+        help="카테고리를 관리합니다.",
+)
+
+    category_subparsers = category_parser.add_subparsers(
+        dest="category_command",
+        required=True,
+    )
+
+    category_add_parser = category_subparsers.add_parser(
+        "add",
+        help="카테고리를 추가합니다.",
+    )
+    category_add_parser.add_argument(
+        "--name",
+        required=True,
+        help="추가할 카테고리 이름",
+    )
+
+    category_subparsers.add_parser(
+        "list",
+        help="카테고리 목록을 조회합니다.",
+    )
+
+    category_remove_parser = category_subparsers.add_parser(
+        "remove",
+        help="카테고리를 삭제합니다.",
+    )
+    category_remove_parser.add_argument(
+        "--name",
+        required=True,
+        help="삭제할 카테고리 이름",
+    )
+
     args = parser.parse_args()
 
     transaction_repository = TransactionRepository(DATA_DIR / "transactions.jsonl")
@@ -371,6 +436,22 @@ def main() -> int:
                 service,
                 month=args.month,
                 amount=args.amount,
+            )
+
+    elif args.command == "category":
+        if args.category_command == "add":
+            handle_category_add(
+                service,
+                name=args.name,
+            )
+
+        elif args.category_command == "list":
+            handle_category_list(service)
+
+        elif args.category_command == "remove":
+            handle_category_remove(
+                service,
+                name=args.name,
             )
 
     return 0

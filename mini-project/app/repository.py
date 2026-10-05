@@ -78,6 +78,21 @@ class CategoryRepository:
         with self.file_path.open("a", encoding="utf-8") as file:
             file.write(json.dumps(data, ensure_ascii=False) + "\n")
 
+    def remove(self, name: str) -> None:
+        """지정한 카테고리를 삭제한다."""
+        categories = [
+            category
+            for category in self.get_all()
+            if category != name
+        ]
+
+        with self.file_path.open("w", encoding="utf-8") as file:
+            for category in categories:
+                data = {"name": category}
+                file.write(
+                    json.dumps(data, ensure_ascii=False) + "\n"
+                )
+
 
 class BudgetRepository:
     def __init__(self, file_path: Path) -> None:
