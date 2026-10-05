@@ -43,6 +43,14 @@ class TransactionRepository:
                 data = json.loads(line)
                 yield Transaction(**data)
 
+    def get_by_id(self, transaction_id: str) -> Transaction | None:
+        """지정한 ID의 거래를 반환한다."""
+        for transaction in self.get_all():
+            if transaction.id == transaction_id:
+                return transaction
+
+        return None
+
     def add(self, transaction: Transaction) -> None:
         """거래 내역 한 건을 JSONL 파일에 추가한다."""
         data = {
@@ -57,6 +65,70 @@ class TransactionRepository:
 
         with self.file_path.open("a", encoding="utf-8") as file:
             file.write(json.dumps(data, ensure_ascii=False) + "\n")
+
+    def update(self, transaction: Transaction) -> bool:
+        """지정한 거래를 수정하고 성공 여부를 반환한다."""
+        temp_path = self.file_path.with_suffix(".tmp")
+        updated = False
+
+        with temp_path.open("w", encoding="utf-8") as temp_file:
+            for saved_transaction in self.get_all():
+                if saved_transaction.id == transaction.id:
+                    saved_transaction = transaction
+                    updated = True
+
+                data = {
+                    "id": saved_transaction.id,
+                    "type": saved_transaction.type,
+                    "date": saved_transaction.date,
+                    "amount": saved_transaction.amount,
+                    "category": saved_transaction.category,
+                    "memo": saved_transaction.memo,
+                    "tags": saved_transaction.tags,
+                }
+
+                temp_file.write(
+                    json.dumps(data, ensure_ascii=False) + "\n"
+                )
+
+        if updated:
+            temp_path.replace(self.file_path)
+        else:
+            temp_path.unlink()
+
+        return updated
+
+    def delete(self, transaction_id: str) -> bool:
+        """지정한 ID의 거래를 삭제하고 성공 여부를 반환한다."""
+        temp_path = self.file_path.with_suffix(".tmp")
+        deleted = False
+
+        with temp_path.open("w", encoding="utf-8") as temp_file:
+            for transaction in self.get_all():
+                if transaction.id == transaction_id:
+                    deleted = True
+                    continue
+
+                data = {
+                    "id": transaction.id,
+                    "type": transaction.type,
+                    "date": transaction.date,
+                    "amount": transaction.amount,
+                    "category": transaction.category,
+                    "memo": transaction.memo,
+                    "tags": transaction.tags,
+                }
+
+                temp_file.write(
+                    json.dumps(data, ensure_ascii=False) + "\n"
+                )
+
+        if deleted:
+            temp_path.replace(self.file_path)
+        else:
+            temp_path.unlink()
+
+        return deleted
 
 
 class CategoryRepository:

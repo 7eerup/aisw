@@ -227,3 +227,58 @@ class BudgetService:
             )
 
         self.category_repository.remove(name)
+
+    def update_transaction(
+        self,
+        transaction_id: str,
+        date: str | None = None,
+        transaction_type: str | None = None,
+        amount: int | None = None,
+        category: str | None = None,
+        memo: str | None = None,
+        tags: list[str] | None = None,
+    ) -> Transaction:
+        """지정한 거래의 입력된 필드만 수정한다."""
+        transaction = self.transaction_repository.get_by_id(transaction_id)
+
+        if transaction is None:
+            raise ValueError("해당 ID의 거래 내역이 없습니다.")
+
+        if date is not None:
+            if not is_valid_date(date):
+                raise ValueError("날짜 형식이 올바르지 않습니다.")
+            transaction.date = date
+
+        if transaction_type is not None:
+            if not is_valid_type(transaction_type):
+                raise ValueError(
+                    "거래 타입은 income 또는 expense여야 합니다."
+                )
+            transaction.type = transaction_type
+
+        if amount is not None:
+            if not is_valid_amount(amount):
+                raise ValueError("금액은 0보다 커야 합니다.")
+            transaction.amount = amount
+
+        if category is not None:
+            if not self.category_exists(category):
+                raise ValueError("등록되지 않은 카테고리입니다.")
+            transaction.category = category
+
+        if memo is not None:
+            transaction.memo = memo
+
+        if tags is not None:
+            transaction.tags = tags
+
+        self.transaction_repository.update(transaction)
+
+        return transaction
+
+    def delete_transaction(self, transaction_id: str) -> None:
+        """지정한 ID의 거래를 삭제한다."""
+        deleted = self.transaction_repository.delete(transaction_id)
+
+        if not deleted:
+            raise ValueError("해당 ID의 거래 내역이 없습니다.")

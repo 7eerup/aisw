@@ -243,6 +243,48 @@ def handle_category_remove(
     print(f"[카테고리 삭제 완료] {name}")
 
 
+def handle_update(
+    service: BudgetService,
+    transaction_id: str,
+    date: str | None = None,
+    transaction_type: str | None = None,
+    amount: int | None = None,
+    category: str | None = None,
+    memo: str | None = None,
+    tags: str | None = None,
+) -> None:
+    """지정한 거래의 입력된 필드만 수정한다."""
+    parsed_tags = None
+
+    if tags is not None:
+        parsed_tags = [
+            tag.strip()
+            for tag in tags.split(",")
+            if tag.strip()
+        ]
+
+    transaction = service.update_transaction(
+        transaction_id=transaction_id,
+        date=date,
+        transaction_type=transaction_type,
+        amount=amount,
+        category=category,
+        memo=memo,
+        tags=parsed_tags,
+    )
+
+    print(f"[수정 완료] id={transaction.id}")
+
+
+def handle_delete(
+    service: BudgetService,
+    transaction_id: str,
+) -> None:
+    """지정한 거래를 삭제한다."""
+    service.delete_transaction(transaction_id)
+    print(f"[삭제 완료] id={transaction_id}")
+
+
 @handle_errors
 def main() -> int:
     """명령행 인자를 처리하고 가계부 기능을 실행한다."""
@@ -391,6 +433,64 @@ def main() -> int:
         help="삭제할 카테고리 이름",
     )
 
+    update_parser = subparsers.add_parser(
+        "update",
+        help="거래 내역을 수정합니다.",
+    )
+
+    update_parser.add_argument(
+        "--id",
+        dest="transaction_id",
+        required=True,
+        help="수정할 거래 ID",
+    )
+
+    update_parser.add_argument(
+        "--date",
+        help="수정할 날짜(YYYY-MM-DD)",
+    )
+
+    update_parser.add_argument(
+        "--type",
+        dest="transaction_type",
+        choices=["income", "expense"],
+        help="수정할 거래 타입",
+    )
+
+    update_parser.add_argument(
+        "--amount",
+        type=int,
+        help="수정할 금액",
+    )
+
+    update_parser.add_argument(
+        "--category",
+        help="수정할 카테고리",
+    )
+
+    update_parser.add_argument(
+        "--memo",
+        help="수정할 메모",
+    )
+
+    update_parser.add_argument(
+        "--tags",
+        help="수정할 태그(쉼표로 구분)",
+    )
+
+
+    delete_parser = subparsers.add_parser(
+        "delete",
+        help="거래 내역을 삭제합니다.",
+    )
+
+    delete_parser.add_argument(
+        "--id",
+        dest="transaction_id",
+        required=True,
+        help="삭제할 거래 ID",
+    )
+
     args = parser.parse_args()
 
     transaction_repository = TransactionRepository(DATA_DIR / "transactions.jsonl")
@@ -453,5 +553,23 @@ def main() -> int:
                 service,
                 name=args.name,
             )
+
+    elif args.command == "update":
+        handle_update(
+            service,
+            transaction_id=args.transaction_id,
+            date=args.date,
+            transaction_type=args.transaction_type,
+            amount=args.amount,
+            category=args.category,
+            memo=args.memo,
+            tags=args.tags,
+        )
+
+    elif args.command == "delete":
+        handle_delete(
+            service,
+            transaction_id=args.transaction_id,
+        )
 
     return 0
