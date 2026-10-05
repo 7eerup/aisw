@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from .decorators import handle_errors
-from .repository import CategoryRepository, TransactionRepository
+from .repository import BudgetRepository, CategoryRepository, TransactionRepository
 from .service import BudgetService
 from .validators import is_valid_amount, is_valid_date, is_valid_type, is_valid_month
 
@@ -158,7 +158,7 @@ def handle_summary(
     month: str,
     top: int = 3,
 ) -> None:
-    """월별 수입, 지출, 잔액과 카테고리별 지출을 출력한다."""
+    """월별 거래 요약과 예산 사용 현황을 집계한다."""
 
     if not is_valid_month(month):
         raise ValueError("--month 형식은 YYYY-MM이어야 합니다.")
@@ -179,10 +179,38 @@ def handle_summary(
     print(f"총지출: {summary['expense']}")
     print(f"잔액: {summary['balance']}")
 
+    if summary["budget"] is not None:
+        print(f"예산: {summary['budget']}")
+        print(f"예산 사용률: {summary['budget_usage']:.1f}%")
+
+        if summary["over_budget"]:
+            print("[경고] 예산을 초과했습니다.")
+
     print("\n카테고리별 지출 TOP")
 
     for category, amount in summary["top_categories"]:
         print(f"{category}: {amount}")
+
+
+def handle_budget_set(
+    service: BudgetService,
+    month: str,
+    amount: int,
+) -> None:
+    """월별 예산을 설정한다."""
+
+    if not is_valid_month(month):
+        raise ValueError("--month 형식은 YYYY-MM이어야 합니다.")
+
+    if amount <= 0:
+        raise ValueError("--amount는 0보다 커야 합니다.")
+
+    service.set_budget(
+        month=month,
+        amount=amount,
+    )
+
+    print(f"[예산 설정 완료] {month}: {amount}")
 
 
 @handle_errors
@@ -270,14 +298,44 @@ def main() -> int:
         help="출력할 지출 카테고리 수 (기본값: 3)",
     )
 
+    budget_parser = subparsers.add_parser(
+        "budget",
+        help="월별 예산을 관리합니다.",
+    )
+
+    budget_subparsers = budget_parser.add_subparsers(
+        dest="budget_command",
+        required=True,
+    )
+
+    budget_set_parser = budget_subparsers.add_parser(
+        "set",
+        help="월별 예산을 설정합니다.",
+    )
+
+    budget_set_parser.add_argument(
+        "--month",
+        required=True,
+        help="예산을 설정할 연월(YYYY-MM)",
+    )
+
+    budget_set_parser.add_argument(
+        "--amount",
+        type=int,
+        required=True,
+        help="예산 금액",
+    )
+
     args = parser.parse_args()
 
     transaction_repository = TransactionRepository(DATA_DIR / "transactions.jsonl")
     category_repository = CategoryRepository(DATA_DIR / "categories.jsonl")
+    budget_repository = BudgetRepository(DATA_DIR / "budgets.jsonl")
 
     service = BudgetService(
         transaction_repository,
         category_repository,
+        budget_repository,
     )
 
     if args.command == "add":
@@ -306,5 +364,13 @@ def main() -> int:
             month=args.month,
             top=args.top,
         )
+
+    elif args.command == "budget":
+        if args.budget_command == "set":
+            handle_budget_set(
+                service,
+                month=args.month,
+                amount=args.amount,
+            )
 
     return 0

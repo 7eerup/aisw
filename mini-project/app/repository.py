@@ -90,12 +90,36 @@ class BudgetRepository:
                 if line.strip():
                     yield json.loads(line)
 
-    def add(self, month: str, amount: int) -> None:
-        """월별 예산 한 건을 JSONL 파일에 추가한다."""
-        data = {
-            "month": month,
-            "amount": amount,
-        }
+    def get_by_month(self, month: str) -> dict | None:
+        """지정한 월의 예산을 반환한다."""
+        for budget in self.get_all():
+            if budget["month"] == month:
+                return budget
 
-        with self.file_path.open("a", encoding="utf-8") as file:
-            file.write(json.dumps(data, ensure_ascii=False) + "\n")
+        return None
+
+    def set(self, month: str, amount: int) -> None:
+        """월별 예산을 새로 저장하거나 기존 예산을 변경한다."""
+        budgets = list(self.get_all())
+
+        updated = False
+
+        for budget in budgets:
+            if budget["month"] == month:
+                budget["amount"] = amount
+                updated = True
+                break
+
+        if not updated:
+            budgets.append(
+                {
+                    "month": month,
+                    "amount": amount,
+                }
+            )
+
+        with self.file_path.open("w", encoding="utf-8") as file:
+            for budget in budgets:
+                file.write(
+                    json.dumps(budget, ensure_ascii=False) + "\n"
+                )

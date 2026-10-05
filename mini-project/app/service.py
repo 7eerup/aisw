@@ -2,7 +2,7 @@ from collections import deque
 from typing import Iterator
 
 from .models import Transaction
-from .repository import CategoryRepository, TransactionRepository
+from .repository import BudgetRepository, CategoryRepository, TransactionRepository
 from .validators import is_valid_amount, is_valid_date, is_valid_type
 
 
@@ -11,9 +11,11 @@ class BudgetService:
         self,
         transaction_repository: TransactionRepository,
         category_repository: CategoryRepository,
+        budget_repository: BudgetRepository,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.category_repository = category_repository
+        self.budget_repository = budget_repository
 
     def category_exists(self, category: str) -> bool:
         """카테고리의 존재 여부를 반환한다."""
@@ -155,10 +157,38 @@ class BudgetService:
             reverse=True,
         )[:top]
 
+        budget = self.budget_repository.get_by_month(month)
+
+        budget_amount = None
+        budget_usage = None
+        over_budget = False
+
+        if budget is not None:
+            budget_amount = budget["amount"]
+            budget_usage = (total_expense / budget_amount) * 100
+            over_budget = total_expense > budget_amount
+
         return {
             "found": found,
             "income": total_income,
             "expense": total_expense,
             "balance": total_income - total_expense,
             "top_categories": top_categories,
+            "budget": budget_amount,
+            "budget_usage": budget_usage,
+            "over_budget": over_budget,
         }
+
+    def set_budget(
+        self,
+        month: str,
+        amount: int,
+    ) -> None:
+        """지정한 월의 예산을 저장한다."""
+        if amount <= 0:
+            raise ValueError("예산은 0보다 커야 합니다.")
+
+        self.budget_repository.set(
+            month=month,
+            amount=amount,
+        )
