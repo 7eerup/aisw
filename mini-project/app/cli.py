@@ -1,3 +1,4 @@
+import unicodedata
 import argparse
 import shutil
 from datetime import datetime
@@ -93,15 +94,7 @@ def handle_list(
     for transaction in transactions:
         found = True
 
-        print(
-            f"{transaction.id} | "
-            f"{transaction.date} | "
-            f"{transaction.type} | "
-            f"{transaction.category} | "
-            f"{transaction.amount} | "
-            f"{transaction.memo} | "
-            f"{', '.join(transaction.tags)}"
-        )
+        print_transaction(transaction)
 
     if not found:
         print("거래 내역이 없습니다.")
@@ -145,15 +138,7 @@ def handle_search(
     for transaction in transactions:
         found = True
 
-        print(
-            f"{transaction.id} | "
-            f"{transaction.date} | "
-            f"{transaction.type} | "
-            f"{transaction.category} | "
-            f"{transaction.amount} | "
-            f"{transaction.memo} | "
-            f"{', '.join(transaction.tags)}"
-        )
+        print_transaction(transaction)
 
     if not found:
         print("검색 결과가 없습니다.")
@@ -359,6 +344,7 @@ def handle_backup(data_dir: Path) -> None:
         "transactions.jsonl",
         "categories.jsonl",
         "budgets.jsonl",
+        "recurring.jsonl",
     )
 
     for filename in filenames:
@@ -398,21 +384,28 @@ def handle_recurring_add(
     print(f"[반복 내역 등록 완료] id={recurring.id}")
 
 
+def print_recurring(recurring) -> None:
+    """반복 내역 한 건을 정렬된 테이블 형식으로 출력한다."""
+    tags = ", ".join(recurring.tags)
+
+    print(
+        f"{pad(recurring.id, 10)} | "
+        f"{str(recurring.day).rjust(2)} | "
+        f"{pad(recurring.type, 7)} | "
+        f"{pad(recurring.category, 12)} | "
+        f"{str(recurring.amount).rjust(12)} | "
+        f"{pad(recurring.memo, 16)} | "
+        f"{tags}"
+    )
+
+
 def handle_recurring_list(service: BudgetService) -> None:
     """등록된 반복 내역을 출력한다."""
     found = False
 
     for recurring in service.list_recurring():
         found = True
-        print(
-            f"{recurring.id} | "
-            f"day={recurring.day} | "
-            f"{recurring.type} | "
-            f"{recurring.category} | "
-            f"{recurring.amount} | "
-            f"{recurring.memo} | "
-            f"{', '.join(recurring.tags)}"
-        )
+        print_recurring(recurring)
 
     if not found:
         print("등록된 반복 내역이 없습니다.")
@@ -425,6 +418,40 @@ def handle_recurring_apply(
     """반복 내역을 지정한 월의 거래로 생성한다."""
     count = service.apply_recurring(month)
     print(f"[반복 내역 적용 완료] {count}건")
+
+
+def display_width(value: str) -> int:
+    """한글을 고려한 문자열의 터미널 출력 너비를 반환한다."""
+    width = 0
+
+    for char in value:
+        if unicodedata.east_asian_width(char) in ("W", "F"):
+            width += 2
+        else:
+            width += 1
+
+    return width
+
+
+def pad(value: str, width: int) -> str:
+    """문자열을 지정한 출력 너비만큼 왼쪽 정렬한다."""
+    padding = max(0, width - display_width(value))
+    return value + (" " * padding)
+
+
+def print_transaction(transaction) -> None:
+    """거래 내역 한 건을 정렬된 테이블 형식으로 출력한다."""
+    tags = ", ".join(transaction.tags)
+
+    print(
+        f"{pad(transaction.id, 10)} | "
+        f"{pad(transaction.date, 10)} | "
+        f"{pad(transaction.type, 7)} | "
+        f"{pad(transaction.category, 12)} | "
+        f"{str(transaction.amount).rjust(12)} | "
+        f"{pad(transaction.memo, 16)} | "
+        f"{tags}"
+    )
 
 
 @handle_errors
