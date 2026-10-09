@@ -44,6 +44,17 @@ Python 표준 라이브러리 활용한 파일 기반 가계부 CLI 프로그램
 | `sys` | 프로그램 종료 코드(`sys.exit`) 처리 |
 
 
+## 파일/모듈 역할
+
+- `cli.py` → 사용자 명령 입력, 옵션 처리, 결과 출력
+- `service.py` → 거래 검증, 검색, 요약, 예산, 반복 거래 등 핵심 로직 처리
+- `repository.py` → JSONL/CSV 파일 읽기, 저장, 수정, 삭제
+- `models.py` → Transaction, RecurringTransaction 데이터 구조 정의
+- `validators.py` → 날짜, 금액, 타입, 월 형식 검증
+- `decorators.py` → 공통 예외 처리 및 오류 메시지 출력
+- `__main__.py` → python -m app 실행 진입점
+
+
 ## 실행 방법
 
 ```bash
