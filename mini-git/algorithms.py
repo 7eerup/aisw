@@ -53,15 +53,15 @@ def parent_first(commits: dict[str, Commit]) -> list[Commit]:
 def ancestors(start: str, commits: dict[str, Commit]) -> list[str]:
     """지정한 커밋의 모든 조상 해시를 중복 없이 탐색 순서대로 반환한다."""
     visited = {start}
-    pending = list(reversed(commits[start].parents))
+    stack = list(reversed(commits[start].parents))
     result = []
-    while pending:
-        current = pending.pop()
+    while stack:
+        current = stack.pop()
         if current in visited:
             continue
         visited.add(current)
         result.append(current)
-        pending.extend(reversed(commits[current].parents))
+        stack.extend(reversed(commits[current].parents))
     return result
 
 
