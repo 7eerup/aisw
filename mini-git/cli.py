@@ -7,7 +7,11 @@ from repository import MiniGitError, Repository
 def format_commit(commit: Commit) -> str:
     """커밋의 필수 메타데이터를 지정된 형식으로 출력한다."""
     timestamp = commit.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    return f"commit {commit.hash} ({commit.author}, {timestamp})\n{commit.message}"
+    return (
+        f"commit {commit.hash} ({commit.author}, {timestamp}) "
+        f"[{commit.branch}]\n"
+        f"{commit.message}"
+    )
 
 
 def format_search(commits: list[Commit]) -> str:

@@ -62,6 +62,7 @@ class Repository:
             author=self.author,
             timestamp=datetime.now(),
             parents=(parent,) if parent is not None else (),
+            branch=self.head,
         )
         self.commits[hash_] = commit
         self.branches[self.head] = hash_

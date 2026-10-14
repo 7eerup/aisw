@@ -11,3 +11,4 @@ class Commit:
     author: str
     timestamp: datetime
     parents: tuple[str, ...]
+    branch: str
