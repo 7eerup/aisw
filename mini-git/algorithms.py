@@ -1,12 +1,8 @@
 from collections import deque
-from typing import Callable, TypeVar
-
 from models import Commit
 
-T = TypeVar("T")
 
-
-def merge_sort(items: list[T], key: Callable[[T], object]) -> list[T]:
+def merge_sort(items: list[Commit], key) -> list[Commit]:
     """표준 정렬 API를 사용하지 않고 안정적인 오름차순 병합 정렬을 수행한다."""
     if len(items) < 2:
         return items[:]
