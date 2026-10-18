@@ -58,6 +58,11 @@ def main() -> None:
             "민감정보 마스킹 및 "
             f"diff {arguments.max_diff_lines}줄 제한"
         )
+    else:
+        print(
+            "[WARNING] safe-mode: OFF - "
+            "원본 Git 정보가 API로 전달됩니다."
+        )
 
     try:
         api_key = get_api_key()
@@ -80,6 +85,7 @@ def main() -> None:
     print(f"[INFO] 컨벤션: {arguments.convention}")
     print(f"[INFO] AI 모델: {arguments.model}")
     print(f"[INFO] AI API Base URL: {base_url}")
+    print("[INFO] AI API Key: 설정됨")
     print("[INFO] AI API 요청 중...")
 
     try:
