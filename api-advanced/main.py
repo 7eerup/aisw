@@ -1,5 +1,3 @@
-"""AI 기반 Git 커밋 및 PR 생성기 실행 모듈."""
-
 from app.ai_client import AIClientError, generate_text
 from app.cli import parse_arguments
 from app.config import (

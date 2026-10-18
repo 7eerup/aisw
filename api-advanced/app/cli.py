@@ -1,5 +1,3 @@
-"""명령행 인자와 옵션을 처리하는 모듈."""
-
 import argparse
 
 from app.sanitizer import MAX_DIFF_LINES
@@ -19,9 +17,7 @@ def parse_temperature(value: str) -> float:
     temperature = float(value)
 
     if not 0.0 <= temperature <= 2.0:
-        raise argparse.ArgumentTypeError(
-            "temperature는 0.0 이상 2.0 이하여야 합니다."
-        )
+        raise argparse.ArgumentTypeError()
 
     return temperature
 
@@ -31,9 +27,7 @@ def parse_max_tokens(value: str) -> int:
     max_tokens = int(value)
 
     if max_tokens <= 0:
-        raise argparse.ArgumentTypeError(
-            "max-tokens는 1 이상의 정수여야 합니다."
-        )
+        raise argparse.ArgumentTypeError("max-tokens는 1 이상의 정수여야 합니다.")
 
     return max_tokens
 
@@ -43,9 +37,7 @@ def parse_max_diff_lines(value: str) -> int:
     max_diff_lines = int(value)
 
     if max_diff_lines <= 0:
-        raise argparse.ArgumentTypeError(
-            "max-diff-lines는 1 이상의 정수여야 합니다."
-        )
+        raise argparse.ArgumentTypeError("max-diff-lines는 1 이상의 정수여야 합니다.")
 
     return max_diff_lines
 
@@ -78,19 +70,13 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
         "--max-diff-lines",
         type=parse_max_diff_lines,
         default=MAX_DIFF_LINES,
-        help=(
-            "safe-mode에서 전송할 diff 최대 줄 수 "
-            f"(기본값: {MAX_DIFF_LINES})"
-        ),
+        help=("safe-mode에서 전송할 diff 최대 줄 수 " f"(기본값: {MAX_DIFF_LINES})"),
     )
     parser.add_argument(
         "--convention",
         choices=CONVENTION_CHOICES,
         default=DEFAULT_CONVENTION,
-        help=(
-            "커밋/PR 컨벤션 선택 "
-            f"(기본값: {DEFAULT_CONVENTION})"
-        ),
+        help=("커밋/PR 컨벤션 선택 " f"(기본값: {DEFAULT_CONVENTION})"),
     )
 
 

@@ -1,5 +1,3 @@
-"""OpenAI 호환 Chat Completions API 호출 모듈."""
-
 import openai
 from openai import OpenAI
 
