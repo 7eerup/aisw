@@ -55,3 +55,21 @@ export async function updateItem(id, values) {
 
   return data;
 }
+
+export async function deleteItem(id) {
+  const { data, error } = await supabase
+    .from('items')
+    .delete()
+    .eq('id', id)
+    .select('id');
+
+  if (error) {
+    throw error;
+  }
+
+  if (data.length === 0) {
+    throw new Error('삭제할 게시물을 찾을 수 없습니다.');
+  }
+
+  return data;
+}
