@@ -37,3 +37,21 @@ export async function createItem(values) {
 
   return data;
 }
+
+export async function updateItem(id, values) {
+  const { data, error } = await supabase
+    .from('items')
+    .update({
+      title: values.title,
+      content: values.content,
+    })
+    .eq('id', id)
+    .select('id')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
