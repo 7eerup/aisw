@@ -1,12 +1,10 @@
 import ItemList from '../components/ItemList';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
-
-const sampleItems = [];
+import { useItems } from '../hooks/useItems';
 
 function ItemsPage() {
-  const isLoading = false;
-  const error = '';
+  const { items, isLoading, error } = useItems();
 
   if (isLoading) {
     return <LoadingState />;
@@ -19,7 +17,7 @@ function ItemsPage() {
   return (
     <main>
       <h1>게시물 목록</h1>
-      <ItemList items={sampleItems} />
+      <ItemList items={items} />
     </main>
   );
 }
