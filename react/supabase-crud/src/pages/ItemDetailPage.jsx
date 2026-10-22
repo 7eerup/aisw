@@ -6,6 +6,10 @@ import Button from '../components/Button';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 
+/**
+ * 게시물 상세 조회 및 삭제 페이지
+ * 조회 상태에 따라 화면을 표시하고 수정 페이지 이동을 제공
+ */
 function ItemDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -14,6 +18,9 @@ function ItemDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  /**
+   * 삭제 확인 후 게시물을 삭제하고 목록 페이지로 이동
+   */
   async function handleDelete() {
     const confirmed = window.confirm('정말 이 게시물을 삭제하시겠습니까?');
 

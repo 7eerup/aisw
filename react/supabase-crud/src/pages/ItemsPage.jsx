@@ -6,6 +6,10 @@ import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
 import { useItems } from '../hooks/useItems';
 
+/**
+ * 게시물 목록 및 제목 검색 페이지
+ * 조회 상태와 검색 결과에 따라 화면을 표시
+ */
 function ItemsPage() {
   const { items, isLoading, error } = useItems();
   const [searchTerm, setSearchTerm] = useState('');

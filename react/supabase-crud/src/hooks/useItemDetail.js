@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { getItemById } from '../lib/items';
 
+/**
+ * 게시물 상세 조회 및 로딩·오류 상태 관리
+ *
+ * @param {string} id - 조회할 게시물 ID
+ * @returns {{ item: Object|null, isLoading: boolean, error: string|null }}
+ */
 export function useItemDetail(id) {
   const [item, setItem] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

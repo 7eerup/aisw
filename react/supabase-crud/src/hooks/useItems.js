@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getItems } from '../lib/items';
 
+/**
+ * 게시물 목록 조회 및 로딩·오류 상태 관리
+ *
+ * @returns {{ items: Object[], isLoading: boolean, error: string|null }}
+ */
 export function useItems() {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

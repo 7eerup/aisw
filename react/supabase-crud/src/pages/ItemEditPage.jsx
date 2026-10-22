@@ -5,11 +5,19 @@ import ErrorState from '../components/ErrorState';
 import { useItemDetail } from '../hooks/useItemDetail';
 import { updateItem } from '../lib/items';
 
+/**
+ * 게시물 수정 페이지
+ * 기존 데이터를 불러와 수정 폼에 표시
+ */
 function ItemEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { item, isLoading, error } = useItemDetail(id);
 
+  /**
+   * 게시물을 수정하고 상세 페이지로 이동
+   * @param {{ title: string, content: string }} values - 수정할 게시물 데이터
+   */
   async function handleUpdate(values) {
     await updateItem(id, values);
     navigate(`/items/${id}`);
