@@ -25,7 +25,7 @@ export async function getItemById(id) {
     .from('items')
     .select('id, title, content, created_at')
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 

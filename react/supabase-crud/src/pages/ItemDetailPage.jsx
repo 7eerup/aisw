@@ -5,6 +5,7 @@ import { deleteItem } from '../lib/items';
 import Button from '../components/Button';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
+import EmptyState from '../components/EmptyState';
 
 /**
  * 게시물 상세 조회 및 삭제 페이지
@@ -43,7 +44,7 @@ function ItemDetailPage() {
 
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
-  if (!item) return <p>게시물을 찾을 수 없습니다.</p>;
+  if (!item) return <EmptyState message="게시물을 찾을 수 없습니다." />;
 
   return (
     <section>

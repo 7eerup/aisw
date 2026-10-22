@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router';
 import ItemForm from '../components/ItemForm';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
+import EmptyState from '../components/EmptyState';
 import { useItemDetail } from '../hooks/useItemDetail';
 import { updateItem } from '../lib/items';
 
@@ -32,7 +33,7 @@ function ItemEditPage() {
   }
 
   if (!item) {
-    return <p>게시물을 찾을 수 없습니다.</p>;
+    return <EmptyState message="게시물을 찾을 수 없습니다." />;
   }
 
   return (
